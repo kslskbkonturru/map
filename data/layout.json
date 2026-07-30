@@ -1,0 +1,156 @@
+{
+  "meta": {
+    "schema": "stm/layout/v1",
+    "version": "1.0",
+    "updated": "2026-07-30",
+    "author": "Service Transformation Map"
+  },
+
+  "data": {
+
+    "canvas": {
+
+      "width": 1600,
+
+      "height": 900,
+
+      "padding": 60,
+
+      "grid": 20
+
+    },
+
+    "view": {
+
+      "zoom": 100,
+
+      "center": true,
+
+      "showGrid": false,
+
+      "showConnections": true,
+
+      "showTimeline": true
+
+    },
+
+    "zones": [
+
+      {
+        "id": "zone-service",
+
+        "title": "Уровни сервиса",
+
+        "focusId": "focus-service-levels",
+
+        "order": 1
+      },
+
+      {
+        "id": "zone-requests",
+
+        "title": "Решаем запросы клиентов",
+
+        "focusId": "focus-request-management",
+
+        "order": 2
+      },
+
+      {
+        "id": "zone-voc",
+
+        "title": "Voice of Customer",
+
+        "focusId": "focus-voc",
+
+        "order": 3
+      },
+
+      {
+        "id": "zone-cxi",
+
+        "title": "CXI",
+
+        "focusId": "focus-cxi",
+
+        "order": 4
+      }
+
+    ],
+
+    "lanes": [
+
+      {
+        "id": "lane-core",
+
+        "title": "Ключевые проекты",
+
+        "order": 1
+      },
+
+      {
+        "id": "lane-support",
+
+        "title": "Поддерживающие проекты",
+
+        "order": 2
+      }
+
+    ],
+
+    "nodes": [
+
+      {
+        "projectId": "project-service-level-model",
+
+        "zoneId": "zone-service",
+
+        "laneId": "lane-core",
+
+        "position": 1
+      },
+
+      {
+        "projectId": "project-service-catalog",
+
+        "zoneId": "zone-requests",
+
+        "laneId": "lane-core",
+
+        "position": 1
+      },
+
+      {
+        "projectId": "project-routing",
+
+        "zoneId": "zone-requests",
+
+        "laneId": "lane-core",
+
+        "position": 2
+      },
+
+      {
+        "projectId": "project-voc-platform",
+
+        "zoneId": "zone-voc",
+
+        "laneId": "lane-core",
+
+        "position": 1
+      },
+
+      {
+        "projectId": "project-cxi-dashboard",
+
+        "zoneId": "zone-cxi",
+
+        "laneId": "lane-core",
+
+        "position": 1
+      }
+
+    ]
+
+  }
+}
