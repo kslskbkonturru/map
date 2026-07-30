@@ -1,0 +1,224 @@
+{
+  "meta": {
+    "schema": "stm/dictionaries/v1",
+    "version": "1.0",
+    "updated": "2026-07-30",
+    "author": "Service Transformation Map"
+  },
+
+  "data": {
+
+    "statuses": [
+      {
+        "id": "planned",
+        "title": "Запланирован",
+        "color": "#90A4AE",
+        "icon": "calendar"
+      },
+      {
+        "id": "active",
+        "title": "В реализации",
+        "color": "#1976D2",
+        "icon": "play"
+      },
+      {
+        "id": "paused",
+        "title": "Приостановлен",
+        "color": "#F9A825",
+        "icon": "pause"
+      },
+      {
+        "id": "completed",
+        "title": "Завершен",
+        "color": "#43A047",
+        "icon": "check"
+      },
+      {
+        "id": "cancelled",
+        "title": "Отменен",
+        "color": "#E53935",
+        "icon": "close"
+      }
+    ],
+
+    "priorities": [
+      {
+        "id": "low",
+        "title": "Низкий",
+        "weight": 1,
+        "color": "#B0BEC5"
+      },
+      {
+        "id": "medium",
+        "title": "Средний",
+        "weight": 2,
+        "color": "#42A5F5"
+      },
+      {
+        "id": "high",
+        "title": "Высокий",
+        "weight": 3,
+        "color": "#FB8C00"
+      },
+      {
+        "id": "critical",
+        "title": "Критический",
+        "weight": 4,
+        "color": "#D32F2F"
+      }
+    ],
+
+    "impactLevels": [
+      {
+        "id": "low",
+        "title": "Низкое влияние",
+        "weight": 1
+      },
+      {
+        "id": "medium",
+        "title": "Среднее влияние",
+        "weight": 2
+      },
+      {
+        "id": "high",
+        "title": "Высокое влияние",
+        "weight": 3
+      },
+      {
+        "id": "critical",
+        "title": "Критическое влияние",
+        "weight": 4
+      }
+    ],
+
+    "linkTypes": [
+      {
+        "id": "dependency",
+        "title": "Зависимость",
+        "lineStyle": "solid",
+        "arrow": true
+      },
+      {
+        "id": "information",
+        "title": "Информационная связь",
+        "lineStyle": "dashed",
+        "arrow": true
+      },
+      {
+        "id": "data",
+        "title": "Передача данных",
+        "lineStyle": "solid",
+        "arrow": true
+      },
+      {
+        "id": "methodology",
+        "title": "Методологическая связь",
+        "lineStyle": "dotted",
+        "arrow": false
+      },
+      {
+        "id": "integration",
+        "title": "Интеграция",
+        "lineStyle": "double",
+        "arrow": true
+      },
+      {
+        "id": "external",
+        "title": "Внешняя зависимость",
+        "lineStyle": "dashed",
+        "arrow": true
+      }
+    ],
+
+    "projectTypes": [
+      {
+        "id": "project",
+        "title": "Проект"
+      },
+      {
+        "id": "initiative",
+        "title": "Программа изменений"
+      },
+      {
+        "id": "activity",
+        "title": "Активность"
+      },
+      {
+        "id": "milestone",
+        "title": "Контрольная точка"
+      }
+    ],
+
+    "riskLevels": [
+      {
+        "id": "low",
+        "title": "Низкий"
+      },
+      {
+        "id": "medium",
+        "title": "Средний"
+      },
+      {
+        "id": "high",
+        "title": "Высокий"
+      },
+      {
+        "id": "critical",
+        "title": "Критический"
+      }
+    ],
+
+    "timelineUnits": [
+      {
+        "id": "quarter",
+        "title": "Квартал"
+      },
+      {
+        "id": "month",
+        "title": "Месяц"
+      },
+      {
+        "id": "year",
+        "title": "Год"
+      }
+    ],
+
+    "views": [
+      {
+        "id": "roadmap",
+        "title": "Дорожная карта"
+      },
+      {
+        "id": "dependencies",
+        "title": "Карта зависимостей"
+      },
+      {
+        "id": "owners",
+        "title": "По владельцам"
+      }
+    ],
+
+    "themes": [
+      {
+        "id": "corporate-light",
+        "title": "Корпоративная светлая"
+      },
+      {
+        "id": "corporate-dark",
+        "title": "Корпоративная темная"
+      }
+    ],
+
+    "icons": {
+      "program": "target",
+      "focus": "layers",
+      "project": "folder",
+      "activity": "check-square",
+      "risk": "alert-triangle",
+      "dependency": "git-branch",
+      "timeline": "clock",
+      "owner": "user",
+      "progress": "bar-chart"
+    }
+  }
+}
