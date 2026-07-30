@@ -1,202 +1,322 @@
 /******************************************************************************
  * Service Transformation Map (STM)
- * Alpha 0.2 / Build 002.0
+ * Alpha 0.2 / Build 002.1
  *
  * app.js
  *
- * Главный контроллер приложения
+ * Application Bootstrap
  ******************************************************************************/
 
 'use strict';
 
-const STM = {
+/* ==========================================================================
+   Namespace
+========================================================================== */
+
+window.STM = window.STM || {};
+
+/* ==========================================================================
+   Application
+========================================================================== */
+
+STM.App = {
+
+    version: "0.2.1",
+
+    build: "002.1",
+
+    initialized: false,
+
+    started: false,
+
+    loading: false,
+
+    modules: [
+
+        "Loader",
+
+        "Renderer",
+
+        "SVG",
+
+        "Timeline",
+
+        "Filters",
+
+        "Modal"
+
+    ],
 
     /* =======================================================================
-       Application State
-    ======================================================================= */
-
-    version: '0.2.0',
-
-    data: {
-
-        program: null,
-
-        focuses: [],
-
-        projects: [],
-
-        links: [],
-
-        metrics: [],
-
-        risks: [],
-
-        history: [],
-
-        workspace: null,
-
-        dictionaries: null
-    },
-
-    ui: {
-
-        currentView: 'roadmap',
-
-        selectedProject: null,
-
-        selectedFocus: null,
-
-        zoom: 1,
-
-        initialized: false
-    },
-
-    /* =======================================================================
-       Startup
+       Initialize
     ======================================================================= */
 
     async initialize() {
 
-        console.log('');
-        console.log('========================================');
-        console.log(' Service Transformation Map');
-        console.log(' Build 002.0');
-        console.log('========================================');
+        if (this.initialized) {
+
+            return;
+
+        }
+
+        console.group(
+
+            `STM ${this.version} Build ${this.build}`
+
+        );
 
         try {
 
-            this.setStatus('Загрузка данных...');
+            this.loading = true;
 
-            await Loader.loadAll();
+            await this.initializeLoader();
 
-            this.data = Loader.data;
+            this.initializeModules();
 
-            this.setStatus('Построение интерфейса...');
+            await this.firstRender();
 
-            Renderer.renderProgram(this.data.program);
+            this.initialized = true;
 
-            Renderer.renderFocuses(this.data.focuses);
+            this.started = true;
 
-            Renderer.renderProjects(this.data.projects);
+            this.loading = false;
 
-            Renderer.renderLinks(this.data.links);
+            console.info(
 
-            Timeline.render(this.data.history);
+                "STM successfully started."
 
-            this.bindEvents();
-
-            this.ui.initialized = true;
-
-            this.setStatus('Готово');
-
-            console.log('STM initialized');
+            );
 
         }
 
         catch (error) {
 
+            this.loading = false;
+
             console.error(error);
 
-            this.setStatus('Ошибка загрузки');
-
         }
+
+        console.groupEnd();
 
     },
 
     /* =======================================================================
-       Events
+       Loader
     ======================================================================= */
 
-    bindEvents() {
+    async initializeLoader() {
 
-        window.addEventListener('resize', () => {
+        if (!STM.Loader) {
 
-            Renderer.refresh();
+            throw new Error(
+
+                "Loader module missing."
+
+            );
+
+        }
+
+        await STM.Loader.initialize();
+
+    },
+
+    /* =======================================================================
+       Modules
+    ======================================================================= */
+
+    initializeModules() {
+
+        this.modules.forEach(name => {
+
+            const module = STM[name];
+
+            if (!module) {
+
+                console.warn(
+
+                    `${name} module missing.`
+
+                );
+
+                return;
+
+            }
+
+            if (typeof module.initialize === "function") {
+
+                module.initialize();
+
+            }
 
         });
 
-        document
-            .getElementById('modal-close')
-            ?.addEventListener('click', () => {
+    },
 
-                Modal.close();
+    /* =======================================================================
+       First Render
+    ======================================================================= */
+
+    async firstRender() {
+
+        const program =
+
+            STM.Loader.getProgram();
+
+        const focuses =
+
+            STM.Loader.getFocuses();
+
+        const projects =
+
+            STM.Loader.getProjects();
+
+        const links =
+
+            STM.Loader.getLinks();
+
+        const history =
+
+            STM.Loader.getHistory();
+
+        if (STM.Renderer) {
+
+            STM.Renderer.render({
+
+                program,
+
+                focuses,
+
+                projects,
+
+                links
 
             });
-
-        document
-            .querySelectorAll('#map-toolbar button')
-            .forEach(button => {
-
-                button.addEventListener('click', () => {
-
-                    this.changeView(button.dataset.view);
-
-                });
-
-            });
-
-    },
-
-    /* =======================================================================
-       Views
-    ======================================================================= */
-
-    changeView(view) {
-
-        this.ui.currentView = view;
-
-        document
-            .getElementById('map-container')
-            ?.setAttribute('data-view', view);
-
-        Renderer.refresh();
-
-    },
-
-    /* =======================================================================
-       Selection
-    ======================================================================= */
-
-    openProject(projectId) {
-
-        this.ui.selectedProject = projectId;
-
-        Modal.open(projectId);
-
-    },
-
-    selectFocus(focusId) {
-
-        this.ui.selectedFocus = focusId;
-
-        Renderer.highlightFocus(focusId);
-
-    },
-
-    /* =======================================================================
-       Status Bar
-    ======================================================================= */
-
-    setStatus(text) {
-
-        const status = document.getElementById('status-text');
-
-        if (status) {
-
-            status.textContent = text;
 
         }
+
+        if (STM.SVG) {
+
+            STM.SVG.render(
+
+                links,
+
+                projects
+
+            );
+
+        }
+
+        if (STM.Timeline) {
+
+            STM.Timeline.render(
+
+                history
+
+            );
+
+        }
+
+        if (STM.Filters) {
+
+            STM.Filters.populate();
+
+            STM.Filters.apply();
+
+        }
+
+    },
+
+    /* =======================================================================
+       Refresh
+    ======================================================================= */
+
+    refresh() {
+
+        if (!this.initialized) {
+
+            return;
+
+        }
+
+        this.firstRender();
+
+    },
+
+    /* =======================================================================
+       Reload Data
+    ======================================================================= */
+
+    async reload() {
+
+        await STM.Loader.initialize();
+
+        this.refresh();
+
+    },
+
+    /* =======================================================================
+       Statistics
+    ======================================================================= */
+
+    statistics() {
+
+        return {
+
+            version: this.version,
+
+            build: this.build,
+
+            initialized: this.initialized,
+
+            loading: this.loading,
+
+            modules: this.modules,
+
+            projects:
+
+                STM.Loader.getProjects()?.length || 0,
+
+            focuses:
+
+                STM.Loader.getFocuses()?.length || 0,
+
+            links:
+
+                STM.Loader.getLinks()?.length || 0
+
+        };
+
+    },
+
+    /* =======================================================================
+       Debug
+    ======================================================================= */
+
+    debug() {
+
+        console.table(
+
+            this.statistics()
+
+        );
 
     }
 
 };
 
-/* ===========================================================================
-   Application Entry Point
-=========================================================================== */
+/* ==========================================================================
+   Bootstrap
+========================================================================== */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener(
 
-    STM.initialize();
+    "DOMContentLoaded",
 
-});
+    async () => {
+
+        await STM.App.initialize();
+
+    }
+
+);
