@@ -1,6 +1,6 @@
 {
   "meta": {
-    "schema": "stm/layout/v1",
+    "schema": "stm/workspace/v1",
     "version": "1.0",
     "updated": "2026-07-30",
     "author": "Service Transformation Map"
@@ -9,69 +9,102 @@
   "data": {
 
     "canvas": {
-
       "width": 1600,
-
       "height": 900,
-
       "padding": 60,
-
-      "grid": 20
-
+      "grid": 20,
+      "background": "default"
     },
 
     "view": {
-
+      "defaultView": "roadmap",
       "zoom": 100,
-
       "center": true,
-
       "showGrid": false,
-
       "showConnections": true,
-
-      "showTimeline": true
-
+      "showTimeline": true,
+      "showProgress": true,
+      "showStatusBar": true,
+      "showAttentionPanel": true
     },
+
+    "views": [
+
+      {
+        "id": "roadmap",
+        "title": "Дорожная карта",
+        "description": "Основное представление программы",
+
+        "groupBy": "focus",
+
+        "showTimeline": true,
+        "showConnections": true,
+        "showProgress": true,
+        "showAttentionPanel": true
+      },
+
+      {
+        "id": "dependencies",
+        "title": "Карта зависимостей",
+        "description": "Отображение зависимостей между проектами",
+
+        "groupBy": "dependency",
+
+        "showTimeline": false,
+        "showConnections": true,
+        "showProgress": false,
+        "showAttentionPanel": true
+      },
+
+      {
+        "id": "owners",
+        "title": "По владельцам",
+        "description": "Группировка проектов по ответственным",
+
+        "groupBy": "owner",
+
+        "showTimeline": false,
+        "showConnections": false,
+        "showProgress": true,
+        "showAttentionPanel": false
+      }
+
+    ],
 
     "zones": [
 
       {
-        "id": "zone-service",
+        "id": "zone-service-levels",
+        "focusId": "focus-service-levels",
 
         "title": "Уровни сервиса",
-
-        "focusId": "focus-service-levels",
 
         "order": 1
       },
 
       {
         "id": "zone-requests",
+        "focusId": "focus-request-management",
 
         "title": "Решаем запросы клиентов",
-
-        "focusId": "focus-request-management",
 
         "order": 2
       },
 
       {
         "id": "zone-voc",
+        "focusId": "focus-voc",
 
         "title": "Voice of Customer",
-
-        "focusId": "focus-voc",
 
         "order": 3
       },
 
       {
         "id": "zone-cxi",
-
-        "title": "CXI",
-
         "focusId": "focus-cxi",
+
+        "title": "CX Intelligence",
 
         "order": 4
       }
@@ -103,7 +136,7 @@
       {
         "projectId": "project-service-level-model",
 
-        "zoneId": "zone-service",
+        "zoneId": "zone-service-levels",
 
         "laneId": "lane-core",
 
@@ -150,7 +183,35 @@
         "position": 1
       }
 
-    ]
+    ],
+
+    "legend": {
+
+      "statuses": {
+
+        "planned": "Запланирован",
+
+        "active": "В реализации",
+
+        "paused": "Приостановлен",
+
+        "completed": "Завершен"
+
+      },
+
+      "priorities": {
+
+        "low": "Низкий",
+
+        "medium": "Средний",
+
+        "high": "Высокий",
+
+        "critical": "Критический"
+
+      }
+
+    }
 
   }
 }
