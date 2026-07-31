@@ -102,33 +102,36 @@ STM.Timeline = {
        Cache DOM
     ======================================================================= */
 
-    cacheDom() {
+ cacheDom() {
 
-        this.dom = {
+    this.dom = {
 
-            container:
+        container:
+            document.getElementById("timeline"),
 
-                document.getElementById("timeline"),
+        header:
+            document.getElementById("timeline-header"),
 
-            header:
+        body:
+            document.getElementById("timeline-body"),
 
-                document.getElementById("timeline-header"),
+        scale:
+            document.getElementById("timeline-scale"),
 
-            body:
+        controls:
+            document.getElementById("timeline-controls")
 
-                document.getElementById("timeline-body"),
+    };
 
-            scale:
+    console.log("Timeline DOM:", this.dom);
 
-                document.getElementById("timeline-scale"),
+    console.log("timeline =", this.dom.container);
+    console.log("timeline-header =", this.dom.header);
+    console.log("timeline-body =", this.dom.body);
+    console.log("timeline-scale =", this.dom.scale);
+    console.log("timeline-controls =", this.dom.controls);
 
-            controls:
-
-                document.getElementById("timeline-controls")
-
-        };
-
-    },
+},
 
     /* =======================================================================
        Render
