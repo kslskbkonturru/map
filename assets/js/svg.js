@@ -7,6 +7,8 @@
 
 'use strict';
 
+window.STM = window.STM || {};
+
 STM.SVG = {
 
     svg: null,
