@@ -152,7 +152,33 @@ STM.SVG = {
         this.svg.appendChild(defs);
 
     },
+    createArrowMarker() {
 
+        const defs = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "defs"
+        );
+
+        ...
+
+        this.svg.appendChild(defs);
+
+    },
+
+    /* =======================================================================
+       Render Filtered
+    ======================================================================= */
+
+    renderFiltered(filteredProjects = null) {
+
+        if (!STM.Loader) return;
+
+        this.render(
+            STM.Loader.getLinks()
+        );
+
+    },
+    
     redraw() {
 
         if (!STM.Loader) return;
