@@ -177,10 +177,20 @@ STM.Loader = {
 
     },
 
-    getDictionary() {
+   getDictionary() {
 
-        return this.data.dictionaries;
+    return this.data.dictionaries;
 
-    }
+},
+
+/* =======================================================================
+   Initialize
+======================================================================= */
+
+async initialize() {
+
+    return await this.loadAll();
+
+}
 
 };
