@@ -85,40 +85,47 @@ STM.Loader = {
        Load one file
     ======================================================================= */
 
-    async load(url) {
+   async load(url) {
 
-        try {
+    try {
 
-            const response = await fetch(url);
+        const response = await fetch(url);
 
-            if (!response.ok) {
+        if (!response.ok) {
 
-                throw new Error(
-
-                    `Cannot load ${url} (${response.status})`
-
-                );
-
-            }
-
-            const json = await response.json();
-
-            console.log("Loaded", url);
-
-            return json;
+            throw new Error(
+                `Cannot load ${url} (${response.status})`
+            );
 
         }
 
-        catch (error) {
+        const json = await response.json();
 
-            console.error(error);
+        console.log("Loaded", url);
 
-            return null;
-
+        // Если JSON имеет структуру { meta, data },
+        // возвращаем только data.
+        if (
+            json &&
+            typeof json === "object" &&
+            "data" in json
+        ) {
+            return json.data;
         }
 
-    },
+        return json;
 
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        return null;
+
+    }
+
+},
     /* =======================================================================
        Getters
     ======================================================================= */
