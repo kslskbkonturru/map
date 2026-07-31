@@ -179,13 +179,14 @@ STM.Renderer = {
 
     },
 
-    append(parent, child) {
+  append(parent, child) {
 
-        if (!parent || !child) return;
+    if (!parent || !child) return;
 
-        parent.appendChild(child);
+    parent.appendChild(child);
 
-    }
+},
+
 
        /* =======================================================================
        Render Focuses
