@@ -179,7 +179,7 @@ STM.Renderer = {
 
     },
 
-  append(parent, child) {
+ append(parent, child) {
 
     if (!parent || !child) return;
 
