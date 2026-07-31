@@ -10,8 +10,9 @@
  *  - DOM Cache
  *  - Configuration
  ******************************************************************************/
-
 'use strict';
+
+window.STM = window.STM || {};
 
 STM.Timeline = {
 
