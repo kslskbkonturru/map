@@ -152,18 +152,6 @@ STM.SVG = {
         this.svg.appendChild(defs);
 
     },
-    createArrowMarker() {
-
-        const defs = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "defs"
-        );
-
-        ...
-
-        this.svg.appendChild(defs);
-
-    },
 
     /* =======================================================================
        Render Filtered
