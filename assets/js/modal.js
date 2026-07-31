@@ -249,11 +249,13 @@ STM.Modal = {
 
                 break;
 
-            default:
+                default:
 
-                console.warn("Unknown entity.");
+            console.warn("Unknown entity.");
 
         }
+
+    },
 
         /* =======================================================================
        Render Project
