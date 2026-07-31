@@ -249,7 +249,7 @@ STM.Modal = {
 
                 break;
 
-                default:
+        default:
 
             console.warn("Unknown entity.");
 
