@@ -1,15 +1,16 @@
 /******************************************************************************
  * Service Transformation Map (STM)
- * Alpha 0.2 / Build 002.0
+ * Build 003.1
  *
  * timeline.js
  *
  * Part 1
- *  - Timeline Controller
- *  - Initialization
- *  - DOM Cache
- *  - Configuration
+ *  - Namespace
+ *  - State
+ *  - DOM
+ *  - Initialize
  ******************************************************************************/
+
 'use strict';
 
 window.STM = window.STM || {};
@@ -17,28 +18,24 @@ window.STM = window.STM || {};
 STM.Timeline = {
 
     /* =======================================================================
-       DOM Cache
-    ======================================================================= */
-
-    dom: {},
-
-    /* =======================================================================
        State
     ======================================================================= */
 
     initialized: false,
 
-    currentScale: "quarter",
+    history: [],
 
-    currentPeriod: null,
+    projects: [],
+
+    visibleProjects: [],
+
+    currentScale: "quarter",
 
     visibleFrom: null,
 
     visibleTo: null,
 
-    projects: [],
-
-    milestones: [],
+    dom: {},
 
     /* =======================================================================
        Configuration
@@ -46,33 +43,19 @@ STM.Timeline = {
 
     config: {
 
-        scales: {
+        scaleWidth: {
 
-            month: {
+            month: 140,
 
-                pixels: 140,
+            quarter: 260,
 
-                label: "Месяц"
+            year: 1040
 
-            },
+        },
 
-            quarter: {
+        minYear: 2025,
 
-                pixels: 240,
-
-                label: "Квартал"
-
-            },
-
-            year: {
-
-                pixels: 720,
-
-                label: "Год"
-
-            }
-
-        }
+        maxYear: 2035
 
     },
 
@@ -102,36 +85,33 @@ STM.Timeline = {
        Cache DOM
     ======================================================================= */
 
- cacheDom() {
+    cacheDom() {
 
-    this.dom = {
+        this.dom = {
 
-        container:
-            document.getElementById("timeline"),
+            container:
 
-        header:
-            document.getElementById("timeline-header"),
+                document.getElementById("timeline"),
 
-        body:
-            document.getElementById("timeline-body"),
+            header:
 
-        scale:
-            document.getElementById("timeline-scale"),
+                document.getElementById("timeline-header"),
 
-        controls:
-            document.getElementById("timeline-controls")
+            body:
 
-    };
+                document.getElementById("timeline-body"),
 
-    console.log("Timeline DOM:", this.dom);
+            scale:
 
-    console.log("timeline =", this.dom.container);
-    console.log("timeline-header =", this.dom.header);
-    console.log("timeline-body =", this.dom.body);
-    console.log("timeline-scale =", this.dom.scale);
-    console.log("timeline-controls =", this.dom.controls);
+                document.getElementById("timeline-scale"),
 
-},
+            controls:
+
+                document.getElementById("timeline-controls")
+
+        };
+
+    },
 
     /* =======================================================================
        Render
@@ -147,6 +127,22 @@ STM.Timeline = {
 
         this.history = history;
 
+        this.projects =
+            STM.Loader.getProjects() || [];
+
+        this.visibleProjects =
+            [...this.projects];
+
+        this.refresh();
+
+    },
+
+    /* =======================================================================
+       Refresh
+    ======================================================================= */
+
+    refresh() {
+
         this.clear();
 
         this.buildTimeline();
@@ -154,65 +150,683 @@ STM.Timeline = {
     },
 
     /* =======================================================================
+       Clear
+    ======================================================================= */
+
+    clear() {
+
+        if (this.dom.header) {
+
+            this.dom.header.innerHTML = "";
+
+        }
+
+        if (this.dom.body) {
+
+            this.dom.body.innerHTML = "";
+
+        }
+
+    },
+        /* =======================================================================
        Build Timeline
     ======================================================================= */
 
     buildTimeline() {
 
+        this.calculateRange();
+
         this.buildHeader();
 
-        this.buildBody();
+        this.buildTimeAxis();
+
+        this.buildProjectRows();
 
     },
 
     /* =======================================================================
-       Build Header
+       Calculate Visible Range
+    ======================================================================= */
+
+    calculateRange() {
+
+        let minYear = this.config.maxYear;
+        let maxYear = this.config.minYear;
+
+        this.visibleProjects.forEach(project => {
+
+            const start = project.timeline?.start;
+            const finish = project.timeline?.finish;
+
+            if (start) {
+
+                const year = parseInt(start.substring(0, 4));
+
+                if (year < minYear) {
+
+                    minYear = year;
+
+                }
+
+            }
+
+            if (finish) {
+
+                const year = parseInt(finish.substring(0, 4));
+
+                if (year > maxYear) {
+
+                    maxYear = year;
+
+                }
+
+            }
+
+        });
+
+        if (minYear > maxYear) {
+
+            minYear = new Date().getFullYear();
+
+            maxYear = minYear + 1;
+
+        }
+
+        this.visibleFrom = minYear;
+
+        this.visibleTo = maxYear;
+
+    },
+
+    /* =======================================================================
+       Header
     ======================================================================= */
 
     buildHeader() {
 
-        if (!this.dom.header) return;
+        if (!this.dom.header) {
 
-        this.dom.header.innerHTML = "";
+            return;
+
+        }
 
         const title = document.createElement("div");
 
         title.className = "timeline-title";
 
-        title.textContent = "Дорожная карта";
+        title.textContent = "Дорожная карта программы";
 
         this.dom.header.appendChild(title);
 
     },
 
     /* =======================================================================
-       Build Body
+       Time Axis
     ======================================================================= */
 
-    buildBody() {
+    buildTimeAxis() {
 
-        if (!this.dom.body) return;
+        if (!this.dom.body) {
 
-        this.dom.body.innerHTML = "";
+            return;
 
-        const placeholder = document.createElement("div");
+        }
 
-        placeholder.className = "timeline-placeholder";
+        const axis = document.createElement("div");
 
-        placeholder.textContent =
-            "Шкала времени будет построена на следующем этапе.";
+        axis.className = "timeline-axis";
 
-        this.dom.body.appendChild(placeholder);
+        for (
+
+            let year = this.visibleFrom;
+
+            year <= this.visibleTo;
+
+            year++
+
+        ) {
+
+            const yearBlock = document.createElement("div");
+
+            yearBlock.className = "timeline-year";
+
+            yearBlock.style.width =
+                this.config.scaleWidth.year + "px";
+
+            const title = document.createElement("div");
+
+            title.className = "timeline-year-title";
+
+            title.textContent = year;
+
+            yearBlock.appendChild(title);
+
+            const quarters = document.createElement("div");
+
+            quarters.className = "timeline-quarters";
+
+            for (let q = 1; q <= 4; q++) {
+
+                const quarter = document.createElement("div");
+
+                quarter.className = "timeline-quarter";
+
+                quarter.style.width =
+                    this.config.scaleWidth.quarter + "px";
+
+                quarter.textContent = "Q" + q;
+
+                quarters.appendChild(quarter);
+
+            }
+
+            yearBlock.appendChild(quarters);
+
+            axis.appendChild(yearBlock);
+
+        }
+
+        this.dom.body.appendChild(axis);
+
+    },
+        /* =======================================================================
+       Project Rows
+    ======================================================================= */
+
+    buildProjectRows() {
+
+        if (!this.dom.body) {
+
+            return;
+
+        }
+
+        const container = document.createElement("div");
+
+        container.className = "timeline-projects";
+
+        this.visibleProjects.forEach(project => {
+
+            container.appendChild(
+
+                this.buildProjectRow(project)
+
+            );
+
+        });
+
+        this.dom.body.appendChild(container);
 
     },
 
     /* =======================================================================
-       Scale
+       Build Project Row
+    ======================================================================= */
+
+    buildProjectRow(project) {
+
+        const row = document.createElement("div");
+
+        row.className = "timeline-row";
+
+        row.dataset.id = project.id;
+
+        /* ---------- Project Name ---------- */
+
+        const label = document.createElement("div");
+
+        label.className = "timeline-label";
+
+        label.textContent =
+            project.shortName || project.name;
+
+        row.appendChild(label);
+
+        /* ---------- Timeline Area ---------- */
+
+        const area = document.createElement("div");
+
+        area.className = "timeline-row-area";
+
+        area.appendChild(
+
+            this.buildProjectBar(project)
+
+        );
+
+        row.appendChild(area);
+
+        return row;
+
+    },
+
+    /* =======================================================================
+       Build Project Bar
+    ======================================================================= */
+
+    buildProjectBar(project) {
+
+        const bar = document.createElement("div");
+
+        bar.className = "timeline-bar";
+
+        bar.dataset.id = project.id;
+
+        const start = project.timeline?.start;
+
+        const finish = project.timeline?.finish;
+
+        const left = this.calculateOffset(start);
+
+        const width = this.calculateDuration(
+
+            start,
+
+            finish
+
+        );
+
+        bar.style.left = left + "px";
+
+        bar.style.width = width + "px";
+
+        bar.textContent =
+
+            project.code ||
+
+            project.shortName ||
+
+            project.name;
+
+        bar.addEventListener(
+
+            "click",
+
+            () => {
+
+                STM.Modal?.openProject(project.id);
+
+            }
+
+        );
+
+        return bar;
+
+    },
+
+    /* =======================================================================
+       Timeline Offset
+    ======================================================================= */
+
+    calculateOffset(period) {
+
+        if (!period) {
+
+            return 0;
+
+        }
+
+        const year = parseInt(
+
+            period.substring(0, 4)
+
+        );
+
+        const quarter = parseInt(
+
+            period.substring(6)
+
+        );
+
+        const years =
+
+            year - this.visibleFrom;
+
+        return (
+
+            years *
+
+            this.config.scaleWidth.year +
+
+            (quarter - 1) *
+
+            this.config.scaleWidth.quarter
+
+        );
+
+    },
+
+    /* =======================================================================
+       Timeline Width
+    ======================================================================= */
+
+    calculateDuration(
+
+        start,
+
+        finish
+
+    ) {
+
+        if (!start || !finish) {
+
+            return this.config.scaleWidth.quarter;
+
+        }
+
+        const startYear = parseInt(
+
+            start.substring(0, 4)
+
+        );
+
+        const startQuarter = parseInt(
+
+            start.substring(6)
+
+        );
+
+        const finishYear = parseInt(
+
+            finish.substring(0, 4)
+
+        );
+
+        const finishQuarter = parseInt(
+
+            finish.substring(6)
+
+        );
+
+        const quarters =
+
+            (finishYear - startYear) * 4 +
+
+            (finishQuarter - startQuarter) + 1;
+
+        return (
+
+            quarters *
+
+            this.config.scaleWidth.quarter
+
+        );
+
+    },
+        /* =======================================================================
+       Today Marker
+    ======================================================================= */
+
+    buildTodayMarker() {
+
+        if (!this.dom.body) {
+
+            return;
+
+        }
+
+        const today = new Date();
+
+        const year = today.getFullYear();
+
+        const month = today.getMonth() + 1;
+
+        const quarter = Math.ceil(month / 3);
+
+        if (
+
+            year < this.visibleFrom ||
+
+            year > this.visibleTo
+
+        ) {
+
+            return;
+
+        }
+
+        const marker = document.createElement("div");
+
+        marker.className = "timeline-today";
+
+        marker.style.left =
+
+            this.calculateOffset(
+
+                `${year}-Q${quarter}`
+
+            ) + "px";
+
+        this.dom.body.appendChild(marker);
+
+    },
+
+    /* =======================================================================
+       Milestones
+    ======================================================================= */
+
+    buildMilestones() {
+
+        if (!this.dom.body) {
+
+            return;
+
+        }
+
+        this.visibleProjects.forEach(project => {
+
+            if (!project.milestones) {
+
+                return;
+
+            }
+
+            project.milestones.forEach(milestone => {
+
+                const point = document.createElement("div");
+
+                point.className = "timeline-milestone";
+
+                point.style.left =
+
+                    this.calculateOffset(
+
+                        milestone.period
+
+                    ) + "px";
+
+                point.title = milestone.name;
+
+                this.dom.body.appendChild(point);
+
+            });
+
+        });
+
+    },
+
+    /* =======================================================================
+       Highlight Project Status
+    ======================================================================= */
+
+    updateProjectStyles() {
+
+        document
+
+            .querySelectorAll(".timeline-bar")
+
+            .forEach(bar => {
+
+                const project =
+
+                    this.visibleProjects.find(
+
+                        p => p.id === bar.dataset.id
+
+                    );
+
+                if (!project) {
+
+                    return;
+
+                }
+
+                bar.classList.remove(
+
+                    "planned",
+
+                    "active",
+
+                    "completed",
+
+                    "delayed"
+
+                );
+
+                switch (
+
+                    project.status?.code
+
+                ) {
+
+                    case "planned":
+
+                        bar.classList.add(
+
+                            "planned"
+
+                        );
+
+                        break;
+
+                    case "completed":
+
+                        bar.classList.add(
+
+                            "completed"
+
+                        );
+
+                        break;
+
+                    case "delayed":
+
+                        bar.classList.add(
+
+                            "delayed"
+
+                        );
+
+                        break;
+
+                    default:
+
+                        bar.classList.add(
+
+                            "active"
+
+                        );
+
+                }
+
+            });
+
+    },
+
+    /* =======================================================================
+       Legend
+    ======================================================================= */
+
+    buildLegend() {
+
+        if (!this.dom.controls) {
+
+            return;
+
+        }
+
+        this.dom.controls.innerHTML = "";
+
+        const legend = [
+
+            {
+
+                cls: "planned",
+
+                text: "Планируется"
+
+            },
+
+            {
+
+                cls: "active",
+
+                text: "В реализации"
+
+            },
+
+            {
+
+                cls: "completed",
+
+                text: "Завершено"
+
+            },
+
+            {
+
+                cls: "delayed",
+
+                text: "Есть риск"
+
+            }
+
+        ];
+
+        legend.forEach(item => {
+
+            const block = document.createElement("div");
+
+            block.className =
+
+                "timeline-legend-item";
+
+            block.innerHTML =
+
+                `<span class="timeline-color ${item.cls}"></span>${item.text}`;
+
+            this.dom.controls.appendChild(
+
+                block
+
+            );
+
+        });
+
+    },
+
+    /* =======================================================================
+       Refresh Decorations
+    ======================================================================= */
+
+    decorateTimeline() {
+
+        this.buildTodayMarker();
+
+        this.buildMilestones();
+
+        this.updateProjectStyles();
+
+        this.buildLegend();
+
+    },
+        /* =======================================================================
+       Set Scale
     ======================================================================= */
 
     setScale(scale) {
 
-        if (!this.config.scales[scale]) {
+        if (!this.config.scaleWidth[scale]) {
 
             return;
 
@@ -224,19 +838,165 @@ STM.Timeline = {
 
     },
 
-    getScale() {
+    /* =======================================================================
+       Get Scale Width
+    ======================================================================= */
 
-        return this.currentScale;
+    getScaleWidth() {
+
+        return this.config.scaleWidth[
+            this.currentScale
+        ];
 
     },
 
     /* =======================================================================
-       Refresh
+       Zoom In
     ======================================================================= */
 
-    refresh() {
+    zoomIn() {
 
-        this.render(this.history);
+        switch (this.currentScale) {
+
+            case "year":
+
+                this.currentScale = "quarter";
+
+                break;
+
+            case "quarter":
+
+                this.currentScale = "month";
+
+                break;
+
+        }
+
+        this.refresh();
+
+    },
+
+    /* =======================================================================
+       Zoom Out
+    ======================================================================= */
+
+    zoomOut() {
+
+        switch (this.currentScale) {
+
+            case "month":
+
+                this.currentScale = "quarter";
+
+                break;
+
+            case "quarter":
+
+                this.currentScale = "year";
+
+                break;
+
+        }
+
+        this.refresh();
+
+    },
+
+    /* =======================================================================
+       Scroll To Project
+    ======================================================================= */
+
+    scrollToProject(projectId) {
+
+        const row = document.querySelector(
+
+            `.timeline-row[data-id="${projectId}"]`
+
+        );
+
+        if (!row) {
+
+            return;
+
+        }
+
+        row.scrollIntoView({
+
+            behavior: "smooth",
+
+            block: "center"
+
+        });
+
+    },
+
+    /* =======================================================================
+       Highlight Project
+    ======================================================================= */
+
+    highlightProject(projectId) {
+
+        document
+
+            .querySelectorAll(".timeline-row")
+
+            .forEach(row => {
+
+                row.classList.toggle(
+
+                    "selected",
+
+                    row.dataset.id === projectId
+
+                );
+
+            });
+
+    },
+
+    /* =======================================================================
+       Apply Filtered Projects
+    ======================================================================= */
+
+    setProjects(projects = []) {
+
+        this.visibleProjects = [...projects];
+
+        this.refresh();
+
+    },
+
+    /* =======================================================================
+       Synchronize With Renderer
+    ======================================================================= */
+
+    synchronize() {
+
+        if (
+
+            STM.Renderer &&
+
+            typeof STM.Renderer.getVisibleProjects === "function"
+
+        ) {
+
+            this.visibleProjects =
+
+                STM.Renderer.getVisibleProjects();
+
+        }
+
+        this.refresh();
+
+    },
+
+    /* =======================================================================
+       Resize
+    ======================================================================= */
+
+    resize() {
+
+        this.refresh();
 
     },
 
@@ -246,741 +1006,102 @@ STM.Timeline = {
 
     bindEvents() {
 
-        window.addEventListener("resize", () => {
+        window.addEventListener(
 
-            this.refresh();
+            "resize",
 
-        });
+            () => {
 
-    },
-
-    /* =======================================================================
-       Helpers
-    ======================================================================= */
-    clear() {
-
-        if (this.dom.header) {
-            this.dom.header.innerHTML = "";
-        }
-
-        if (this.dom.body) {
-            this.dom.body.innerHTML = "";
-        }
-    },
-    /* =======================================================================
-       Build Time Axis
-    ======================================================================= */
-    buildTimeAxis() {
-
-        const range = this.calculateRange();
-
-        this.visibleFrom = range.from;
-        this.visibleTo = range.to;
-
-        this.buildYears(range);
-        this.buildQuarters(range);
-        this.buildMonths(range);
-
-    },
-
-    /* =======================================================================
-       Calculate Timeline Range
-    ======================================================================= */
-
-    calculateRange() {
-
-        const projects = STM.Loader.getProjects?.() || [];
-
-        let minDate = null;
-        let maxDate = null;
-
-        projects.forEach(project => {
-
-            if (project.start) {
-
-                const start = new Date(project.start);
-
-                if (!minDate || start < minDate) {
-
-                    minDate = start;
-
-                }
+                this.resize();
 
             }
 
-            if (project.finish) {
+        );
 
-                const finish = new Date(project.finish);
+    },
+        /* =======================================================================
+       Statistics
+    ======================================================================= */
 
-                if (!maxDate || finish > maxDate) {
-
-                    maxDate = finish;
-
-                }
-
-            }
-
-        });
-
-        if (!minDate) {
-
-            minDate = new Date();
-
-        }
-
-        if (!maxDate) {
-
-            maxDate = new Date(minDate);
-
-            maxDate.setFullYear(maxDate.getFullYear() + 1);
-
-        }
-
-        minDate = new Date(minDate.getFullYear(), 0, 1);
-        maxDate = new Date(maxDate.getFullYear(), 11, 31);
+    statistics() {
 
         return {
 
-            from: minDate,
-            to: maxDate
-
-        };
-
-    },
-
-    /* =======================================================================
-       Build Years
-    ======================================================================= */
-
-    buildYears(range) {
-
-        const row = document.createElement("div");
-
-        row.className = "timeline-years";
-
-        let year = range.from.getFullYear();
-
-        while (year <= range.to.getFullYear()) {
-
-            const cell = document.createElement("div");
-
-            cell.className = "timeline-year";
-
-            cell.textContent = year;
-
-            cell.style.width =
-                this.config.scales.year.pixels + "px";
-
-            row.appendChild(cell);
-
-            year++;
-
-        }
-
-        this.dom.body.appendChild(row);
-
-    },
-
-    /* =======================================================================
-       Build Quarters
-    ======================================================================= */
-
-    buildQuarters(range) {
-
-        const row = document.createElement("div");
-
-        row.className = "timeline-quarters";
-
-        let year = range.from.getFullYear();
-
-        while (year <= range.to.getFullYear()) {
-
-            for (let q = 1; q <= 4; q++) {
-
-                const cell =
-                    document.createElement("div");
-
-                cell.className =
-                    "timeline-quarter";
-
-                cell.dataset.year = year;
-
-                cell.dataset.quarter = q;
-
-                cell.textContent =
-                    "Q" + q;
-
-                cell.style.width =
-                    this.config.scales.quarter.pixels + "px";
-
-                row.appendChild(cell);
-
-            }
-
-            year++;
-
-        }
-
-        this.dom.body.appendChild(row);
-
-    },
-
-    /* =======================================================================
-       Build Months
-    ======================================================================= */
-
-    buildMonths(range) {
-
-        const row = document.createElement("div");
-
-        row.className = "timeline-months";
-
-        const monthNames = [
-
-            "Янв",
-            "Фев",
-            "Мар",
-            "Апр",
-            "Май",
-            "Июн",
-            "Июл",
-            "Авг",
-            "Сен",
-            "Окт",
-            "Ноя",
-            "Дек"
-
-        ];
-
-        let date = new Date(range.from);
-
-        while (date <= range.to) {
-
-            const cell =
-                document.createElement("div");
-
-            cell.className =
-                "timeline-month";
-
-            cell.dataset.year =
-                date.getFullYear();
-
-            cell.dataset.month =
-                date.getMonth() + 1;
-
-            cell.textContent =
-                monthNames[date.getMonth()];
-
-            cell.style.width =
-                this.config.scales.month.pixels + "px";
-
-            if (this.isCurrentMonth(date)) {
-
-                cell.classList.add("current");
-
-            }
-
-            row.appendChild(cell);
-
-            date.setMonth(date.getMonth() + 1);
-
-        }
-
-        this.dom.body.appendChild(row);
-
-    },
-
-    /* =======================================================================
-       Current Month
-    ======================================================================= */
-
-    isCurrentMonth(date) {
-
-        const today = new Date();
-
-        return (
-
-            today.getFullYear() === date.getFullYear()
-
-            &&
-
-            today.getMonth() === date.getMonth()
-
-        );
-
-    },
-
-    /* =======================================================================
-       Date → X Coordinate
-    ======================================================================= */
-
-    getX(dateString) {
-
-        const date = new Date(dateString);
-
-        const months =
-
-            (date.getFullYear() - this.visibleFrom.getFullYear()) * 12 +
-
-            (date.getMonth() - this.visibleFrom.getMonth());
-
-        return months *
-
-            this.config.scales.month.pixels;
-
-    },
-
-    /* =======================================================================
-       X → Date
-    ======================================================================= */
-
-    getDateByX(x) {
-
-        const months =
-
-            Math.floor(
-
-                x /
-
-                this.config.scales.month.pixels
-
-            );
-
-        const date =
-
-            new Date(this.visibleFrom);
-
-        date.setMonth(
-
-            date.getMonth() + months
-
-        );
-
-        return date;
-
-    },
-
-    /* =======================================================================
-       Build Timeline
-    ======================================================================= */
-
-    buildTimeline() {
-
-        this.buildHeader();
-
-        this.buildBody();
-
-        this.buildTimeAxis();
-
-    },
-      /* =======================================================================
-       Render Projects
-    ======================================================================= */
-
-    renderProjects() {
-
-        const projects = STM.Loader.getProjects?.() || [];
-
-        this.projects = projects;
-
-        const layer = document.createElement("div");
-
-        layer.className = "timeline-project-layer";
-
-        projects.forEach(project => {
-
-            const item = this.createProjectItem(project);
-
-            layer.appendChild(item);
-
-        });
-
-        this.dom.body.appendChild(layer);
-
-    },
-
-    /* =======================================================================
-       Create Timeline Project
-    ======================================================================= */
-
-    createProjectItem(project) {
-
-        const item = document.createElement("div");
-
-        item.className = "timeline-project";
-
-        item.dataset.id = project.id;
-
-        item.dataset.status = project.status || "planned";
-
-        const startX = this.getX(project.start);
-        const finishX = this.getX(project.finish);
-
-        const width = Math.max(
-
-            finishX - startX,
-
-            this.config.scales.month.pixels / 2
-
-        );
-
-        item.style.left = `${startX}px`;
-        item.style.width = `${width}px`;
-
-        const row = this.calculateRow(project);
-
-        item.style.top = `${row * 42}px`;
-
-        item.innerHTML = `
-
-            <div class="timeline-project-bar"></div>
-
-            <span class="timeline-project-title">
-
-                ${project.name}
-
-            </span>
-
-        `;
-
-        item.addEventListener("mouseenter", () => {
-
-            STM.Renderer.highlightProject(project.id);
-
-        });
-
-        item.addEventListener("mouseleave", () => {
-
-            STM.Renderer.clearProjectHighlight();
-
-        });
-
-        item.addEventListener("click", () => {
-
-            STM.Modal.open(project.id);
-
-        });
-
-        return item;
-
-    },
-
-    /* =======================================================================
-       Calculate Row
-    ======================================================================= */
-
-    calculateRow(project) {
-
-        if (!project.focus) {
-
-            return 0;
-
-        }
-
-        const focuses = STM.Loader.getFocuses?.() || [];
-
-        const index = focuses.findIndex(
-
-            focus => focus.id === project.focus
-
-        );
-
-        return Math.max(index, 0);
-
-    },
-
-    /* =======================================================================
-       Render Milestones
-    ======================================================================= */
-
-    renderMilestones() {
-
-        const history = STM.Loader.getHistory?.() || [];
-
-        const milestones = history.filter(item =>
-
-            item.type === "milestone"
-
-        );
-
-        this.milestones = milestones;
-
-        const layer = document.createElement("div");
-
-        layer.className = "timeline-milestone-layer";
-
-        milestones.forEach(item => {
-
-            layer.appendChild(
-
-                this.createMilestone(item)
-
-            );
-
-        });
-
-        this.dom.body.appendChild(layer);
-
-    },
-
-    /* =======================================================================
-       Create Milestone
-    ======================================================================= */
-
-    createMilestone(item) {
-
-        const marker = document.createElement("div");
-
-        marker.className = "timeline-milestone";
-
-        marker.style.left =
-
-            `${this.getX(item.date)}px`;
-
-        marker.title = item.event;
-
-        marker.innerHTML = `
-
-            <div class="timeline-milestone-icon">◆</div>
-
-            <div class="timeline-milestone-label">
-
-                ${item.event}
-
-            </div>
-
-        `;
-
-        return marker;
-
-    },
-
-    /* =======================================================================
-       Today Marker
-    ======================================================================= */
-
-    renderToday() {
-
-        const today = document.createElement("div");
-
-        today.className = "timeline-today";
-
-        today.style.left =
-
-            `${this.getX(new Date().toISOString())}px`;
-
-        this.dom.body.appendChild(today);
-
-    },
-
-    /* =======================================================================
-       Synchronization
-    ======================================================================= */
-
-    syncSelection(projectId) {
-
-        this.dom.body
-
-            ?.querySelectorAll(".timeline-project")
-
-            .forEach(item => {
-
-                item.classList.toggle(
-
-                    "selected",
-
-                    item.dataset.id === projectId
-
-                );
-
-            });
-
-    },
-
-    /* =======================================================================
-       Build Timeline
-    ======================================================================= */
-
-    buildTimeline() {
-
-        this.buildHeader();
-
-        this.buildBody();
-
-        this.buildTimeAxis();
-
-        this.renderProjects();
-
-        this.renderMilestones();
-
-        this.renderToday();
-
-    },
-      /* =======================================================================
-       Navigate
-    ======================================================================= */
-
-    moveTo(date) {
-
-        if (!this.dom.body) return;
-
-        const x = this.getX(date);
-
-        this.dom.body.scrollTo({
-
-            left: Math.max(x - 300, 0),
-
-            behavior: "smooth"
-
-        });
-
-    },
-
-    moveToday() {
-
-        this.moveTo(new Date().toISOString());
-
-    },
-
-    moveToProject(projectId) {
-
-        const project =
-
-            STM.Loader
-                .getProjects()
-                .find(item => item.id === projectId);
-
-        if (!project) return;
-
-        this.moveTo(project.start);
-
-        this.syncSelection(project.id);
-
-    },
-
-    /* =======================================================================
-       Filter
-    ======================================================================= */
-
-    filterProjects(predicate) {
-
-        this.dom.body
-
-            ?.querySelectorAll(".timeline-project")
-
-            .forEach(item => {
-
-                const project =
-
-                    this.projects.find(
-
-                        p => p.id === item.dataset.id
-
-                    );
-
-                if (!project) return;
-
-                item.style.display =
-
-                    predicate(project)
-
-                        ? ""
-
-                        : "none";
-
-            });
-
-    },
-
-    clearFilter() {
-
-        this.dom.body
-
-            ?.querySelectorAll(".timeline-project")
-
-            .forEach(item => {
-
-                item.style.display = "";
-
-            });
-
-    },
-
-    /* =======================================================================
-       Scale
-    ======================================================================= */
-
-    zoomIn() {
-
-        const order = [
-
-            "month",
-
-            "quarter",
-
-            "year"
-
-        ];
-
-        const index =
-
-            order.indexOf(this.currentScale);
-
-        if (index === 0) return;
-
-        this.setScale(
-
-            order[index - 1]
-
-        );
-
-    },
-
-    zoomOut() {
-
-        const order = [
-
-            "month",
-
-            "quarter",
-
-            "year"
-
-        ];
-
-        const index =
-
-            order.indexOf(this.currentScale);
-
-        if (index === order.length - 1) return;
-
-        this.setScale(
-
-            order[index + 1]
-
-        );
-
-    },
-
-    /* =======================================================================
-       Export State
-    ======================================================================= */
-
-    getState() {
-
-        return {
+            initialized: this.initialized,
 
             scale: this.currentScale,
 
+            totalProjects: this.projects.length,
+
+            visibleProjects: this.visibleProjects.length,
+
             visibleFrom: this.visibleFrom,
 
-            visibleTo: this.visibleTo,
-
-            projects: this.projects.length,
-
-            milestones: this.milestones.length
+            visibleTo: this.visibleTo
 
         };
+
+    },
+
+    /* =======================================================================
+       Get Visible Projects
+    ======================================================================= */
+
+    getVisibleProjects() {
+
+        return this.visibleProjects;
+
+    },
+
+    /* =======================================================================
+       Get Timeline Range
+    ======================================================================= */
+
+    getRange() {
+
+        return {
+
+            from: this.visibleFrom,
+
+            to: this.visibleTo
+
+        };
+
+    },
+
+    /* =======================================================================
+       Get Current Scale
+    ======================================================================= */
+
+    getScale() {
+
+        return this.currentScale;
+
+    },
+
+    /* =======================================================================
+       Set Visible Projects
+    ======================================================================= */
+
+    updateProjects(projects = []) {
+
+        this.visibleProjects = [...projects];
+
+        this.refresh();
+
+    },
+
+    /* =======================================================================
+       Reset
+    ======================================================================= */
+
+    reset() {
+
+        this.visibleProjects = [...this.projects];
+
+        this.currentScale = "quarter";
+
+        this.refresh();
 
     },
 
@@ -990,29 +1111,20 @@ STM.Timeline = {
 
     destroy() {
 
-        this.clear();
+        this.initialized = false;
 
         this.projects = [];
 
-        this.milestones = [];
+        this.visibleProjects = [];
+
+        this.history = [];
 
         this.visibleFrom = null;
 
         this.visibleTo = null;
 
-        this.currentPeriod = null;
-
-        this.initialized = false;
-
-    },
-
-    /* =======================================================================
-       Complete
-    ======================================================================= */
-
-    complete() {
-
-        console.info("Timeline completed.");
+        this.dom = {};
 
     }
-    };
+
+};
