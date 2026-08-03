@@ -438,17 +438,12 @@ STM.Timeline = {
 
             project.name;
 
-        bar.addEventListener(
-
-            "click",
-
-            () => {
-
-                STM.Modal.openProject(project.id);
-
-            }
-
-        );
+bar.addEventListener(
+    "click",
+    () => {
+        STM.Modal.open(project.id);
+    }
+);
 
         return bar;
 
