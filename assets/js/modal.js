@@ -1,22 +1,24 @@
 /******************************************************************************
  * Service Transformation Map (STM)
- * Alpha 0.2 / Build 002.0
- *
  * modal.js
  *
+ * Build 003.1
  * Part 1
- *  - Modal Controller
- *  - Initialization
- *  - Open / Close
- *  - Event Binding
+ *
+ * Namespace
+ * State
+ * Initialize
+ * Cache DOM
  ******************************************************************************/
+
 'use strict';
 
 window.STM = window.STM || {};
+
 STM.Modal = {
 
     /* =======================================================================
-       DOM Cache
+       DOM
     ======================================================================= */
 
     dom: {},
@@ -25,19 +27,23 @@ STM.Modal = {
        State
     ======================================================================= */
 
+    initialized: false,
+
     currentEntity: null,
 
     currentType: null,
 
     currentTab: "overview",
 
-    initialized: false,
-
     /* =======================================================================
        Initialize
     ======================================================================= */
 
     initialize() {
+
+        if (this.initialized) {
+            return;
+        }
 
         this.cacheDom();
 
@@ -58,46 +64,36 @@ STM.Modal = {
         this.dom = {
 
             overlay:
-
                 document.getElementById("modal-overlay"),
 
             window:
-
                 document.getElementById("modal"),
 
             header:
-
                 document.getElementById("modal-header"),
 
             title:
-
                 document.getElementById("modal-title"),
 
             subtitle:
-
                 document.getElementById("modal-subtitle"),
 
             tabs:
-
                 document.getElementById("modal-tabs"),
 
             body:
-
                 document.getElementById("modal-body"),
 
             footer:
-
                 document.getElementById("modal-footer"),
 
             close:
-
                 document.getElementById("modal-close")
 
         };
 
     },
-
-    /* =======================================================================
+        /* =======================================================================
        Open
     ======================================================================= */
 
@@ -132,6 +128,16 @@ STM.Modal = {
         this.render();
 
         this.show();
+
+    },
+
+    /* =======================================================================
+       Compatibility
+    ======================================================================= */
+
+    openProject(projectId) {
+
+        this.open(projectId);
 
     },
 
@@ -185,17 +191,23 @@ STM.Modal = {
 
     bindEvents() {
 
-        this.dom.close
+        this.dom.close?.addEventListener(
 
-            ?.addEventListener("click", () => {
+            "click",
+
+            () => {
 
                 this.close();
 
-            });
+            }
 
-        this.dom.overlay
+        );
 
-            ?.addEventListener("click", event => {
+        this.dom.overlay?.addEventListener(
+
+            "click",
+
+            event => {
 
                 if (event.target === this.dom.overlay) {
 
@@ -203,21 +215,28 @@ STM.Modal = {
 
                 }
 
-            });
+            }
 
-        document.addEventListener("keydown", event => {
+        );
 
-            if (event.key === "Escape") {
+        document.addEventListener(
 
-                this.close();
+            "keydown",
+
+            event => {
+
+                if (event.key === "Escape") {
+
+                    this.close();
+
+                }
 
             }
 
-        });
+        );
 
     },
-
-    /* =======================================================================
+        /* =======================================================================
        Render Dispatcher
     ======================================================================= */
 
@@ -249,15 +268,15 @@ STM.Modal = {
 
                 break;
 
-        default:
+            default:
 
-            console.warn("Unknown entity.");
+                console.warn("Unknown modal entity.");
 
         }
 
     },
 
-        /* =======================================================================
+    /* =======================================================================
        Render Project
     ======================================================================= */
 
@@ -283,23 +302,44 @@ STM.Modal = {
 
     buildHeader(project) {
 
-        this.clear(this.dom.header);
+        if (!this.dom.title) return;
 
         this.dom.title.textContent =
-            project.name;
+            project.name || "";
 
-        this.dom.subtitle.textContent =
-            project.description || "";
+        if (this.dom.subtitle) {
 
-        const status = this.createBadge(
+            this.dom.subtitle.textContent =
+                project.description || "";
 
-            this.getStatusName(project.status),
+        }
 
-            project.status
+        if (this.dom.header) {
 
-        );
+            const oldBadge =
+                this.dom.header.querySelector(".badge");
 
-        this.dom.header.appendChild(status);
+            if (oldBadge) {
+
+                oldBadge.remove();
+
+            }
+
+            const badge = this.createBadge(
+
+                this.getStatusName(
+
+                    project.status?.code || project.status
+
+                ),
+
+                project.status?.code || project.status || "active"
+
+            );
+
+            this.dom.header.appendChild(badge);
+
+        }
 
     },
 
@@ -308,6 +348,8 @@ STM.Modal = {
     ======================================================================= */
 
     buildTabs() {
+
+        if (!this.dom.tabs) return;
 
         this.clear(this.dom.tabs);
 
@@ -346,49 +388,34 @@ STM.Modal = {
 
             button.textContent = tab.title;
 
-            button.addEventListener("click", () => {
+            button.addEventListener(
 
-                this.switchTab(tab.id);
+                "click",
 
-            });
+                () => {
+
+                    this.switchTab(tab.id);
+
+                }
+
+            );
 
             this.dom.tabs.appendChild(button);
 
         });
 
     },
-
-    /* =======================================================================
+        /* =======================================================================
        Body
     ======================================================================= */
 
     buildBody(project) {
 
+        if (!this.dom.body) return;
+
         this.clear(this.dom.body);
 
-        this.dom.body.appendChild(
-
-            this.createOverviewSection(project)
-
-        );
-
-        this.dom.body.appendChild(
-
-            this.createMetricsSection(project)
-
-        );
-
-        this.dom.body.appendChild(
-
-            this.createLinksSection(project)
-
-        );
-
-        this.dom.body.appendChild(
-
-            this.createHistorySection(project)
-
-        );
+        this.renderOverview(project);
 
     },
 
@@ -398,47 +425,79 @@ STM.Modal = {
 
     buildFooter(project) {
 
+        if (!this.dom.footer) return;
+
         this.clear(this.dom.footer);
 
-        const owner =
+        const closeButton = document.createElement("button");
 
-            this.createChip(
+        closeButton.className = "btn btn-secondary";
 
-                project.owner || "Не назначен"
+        closeButton.textContent = "Закрыть";
 
-            );
+        closeButton.addEventListener(
 
-        const progress =
+            "click",
 
-            this.createChip(
+            () => this.close()
 
-                `Готовность: ${project.progress || 0}%`
-
-            );
-
-        const closeButton =
-
-            document.createElement("button");
-
-        closeButton.className =
-
-            "button-primary";
-
-        closeButton.textContent =
-
-            "Закрыть";
-
-        closeButton.addEventListener("click", () => {
-
-            this.close();
-
-        });
-
-        this.dom.footer.appendChild(owner);
-
-        this.dom.footer.appendChild(progress);
+        );
 
         this.dom.footer.appendChild(closeButton);
+
+    },
+
+    /* =======================================================================
+       Switch Tab
+    ======================================================================= */
+
+    switchTab(tab) {
+
+        this.currentTab = tab;
+
+        this.dom.tabs
+
+            ?.querySelectorAll(".modal-tab")
+
+            .forEach(button => {
+
+                button.classList.toggle(
+
+                    "active",
+
+                    button.dataset.tab === tab
+
+                );
+
+            });
+
+        switch (tab) {
+
+            case "overview":
+
+                this.renderOverview(this.currentEntity);
+
+                break;
+
+            case "metrics":
+
+                this.renderMetrics(this.currentEntity);
+
+                break;
+
+            case "links":
+
+                this.renderLinks(this.currentEntity);
+
+                break;
+
+            case "history":
+
+                this.renderHistory(this.currentEntity);
+
+                break;
+
+        }
 
     },
 
@@ -446,233 +505,120 @@ STM.Modal = {
        Overview
     ======================================================================= */
 
-    createOverviewSection(project) {
+    renderOverview(project) {
 
-        const section =
+        if (!this.dom.body) return;
 
-            document.createElement("section");
+        this.clear(this.dom.body);
 
-        section.className =
+        const wrapper = this.create(
 
-            "modal-section";
+            "div",
 
-        section.dataset.tab =
+            "modal-section"
 
-            "overview";
+        );
 
-        section.innerHTML =
+        wrapper.innerHTML = `
 
-            `
-            <h3>Описание проекта</h3>
+            <div class="modal-field">
 
-            <p>${project.description || ""}</p>
+                <strong>Код</strong>
 
-            <table class="property-table">
+                <div>${project.code || "-"}</div>
 
-                <tr>
+            </div>
 
-                    <td>Статус</td>
+            <div class="modal-field">
 
-                    <td>${this.getStatusName(project.status)}</td>
+                <strong>Название</strong>
 
-                </tr>
+                <div>${project.name || "-"}</div>
 
-                <tr>
+            </div>
 
-                    <td>Прогресс</td>
+            <div class="modal-field">
 
-                    <td>${project.progress || 0}%</td>
+                <strong>Описание</strong>
 
-                </tr>
+                <div>${project.description || "-"}</div>
 
-                <tr>
+            </div>
 
-                    <td>Ответственный</td>
+            <div class="modal-field">
 
-                    <td>${project.owner || "-"}</td>
+                <strong>Цель</strong>
 
-                </tr>
+                <div>${project.goal || "-"}</div>
 
-                <tr>
+            </div>
 
-                    <td>Завершение</td>
+            <div class="modal-field">
 
-                    <td>${project.finish || "-"}</td>
+                <strong>Статус</strong>
 
-                </tr>
+                <div>${this.getStatusName(
 
-            </table>
-            `;
+                    project.status?.code ||
 
-        return section;
+                    project.status
+
+                )}</div>
+
+            </div>
+
+            <div class="modal-field">
+
+                <strong>Прогресс</strong>
+
+                <div>${project.progress ?? 0}%</div>
+
+            </div>
+
+            <div class="modal-field">
+
+                <strong>Период</strong>
+
+                <div>
+
+                    ${project.timeline?.start || "-"}
+
+                    →
+
+                    ${project.timeline?.finish || "-"}
+
+                </div>
+
+            </div>
+
+        `;
+
+        this.dom.body.appendChild(wrapper);
 
     },
-
-    /* =======================================================================
+        /* =======================================================================
        Metrics
     ======================================================================= */
 
-    createMetricsSection(project) {
+    renderMetrics(project) {
 
-        const section =
+        if (!this.dom.body) return;
 
-            document.createElement("section");
+        this.clear(this.dom.body);
 
-        section.className =
+        const metrics = STM.Loader.getMetrics()
 
-            "modal-section";
+            .filter(metric =>
 
-        section.dataset.tab =
+                metric.projectId === project.id
 
-            "metrics";
+            );
 
-        section.hidden = true;
+        if (!metrics.length) {
 
-        section.innerHTML =
+            this.dom.body.innerHTML =
 
-            `
-            <h3>Метрики</h3>
-
-            <div id="modal-metrics"></div>
-            `;
-
-        return section;
-
-    },
-
-    /* =======================================================================
-       Links
-    ======================================================================= */
-
-    createLinksSection(project) {
-
-        const section =
-
-            document.createElement("section");
-
-        section.className =
-
-            "modal-section";
-
-        section.dataset.tab =
-
-            "links";
-
-        section.hidden = true;
-
-        section.innerHTML =
-
-            `
-            <h3>Связи</h3>
-
-            <div id="modal-links"></div>
-            `;
-
-        return section;
-
-    },
-
-    /* =======================================================================
-       History
-    ======================================================================= */
-
-    createHistorySection(project) {
-
-        const section =
-
-            document.createElement("section");
-
-        section.className =
-
-            "modal-section";
-
-        section.dataset.tab =
-
-            "history";
-
-        section.hidden = true;
-
-        section.innerHTML =
-
-            `
-            <h3>История изменений</h3>
-
-            <div id="modal-history"></div>
-            `;
-
-        return section;
-
-    }, 
-      /* =======================================================================
-       Switch Tab
-    ======================================================================= */
-
-    switchTab(tabId) {
-
-        this.currentTab = tabId;
-
-        this.dom.tabs
-            ?.querySelectorAll(".modal-tab")
-            .forEach(button => {
-
-                button.classList.toggle(
-                    "active",
-                    button.dataset.tab === tabId
-                );
-
-            });
-
-        this.dom.body
-            ?.querySelectorAll(".modal-section")
-            .forEach(section => {
-
-                section.hidden =
-                    section.dataset.tab !== tabId;
-
-            });
-
-        switch (tabId) {
-
-            case "metrics":
-                this.renderMetrics();
-                break;
-
-            case "links":
-                this.renderLinks();
-                break;
-
-            case "history":
-                this.renderHistory();
-                break;
-
-        }
-
-    },
-
-    /* =======================================================================
-       Render Metrics
-    ======================================================================= */
-
-    renderMetrics() {
-
-        const container =
-            document.getElementById("modal-metrics");
-
-        if (!container) return;
-
-        container.innerHTML = "";
-
-        const metrics =
-            STM.Loader
-                .getMetrics()
-                .filter(metric =>
-                    metric.projectId === this.currentEntity.id
-                );
-
-        if (metrics.length === 0) {
-
-            container.innerHTML =
-                "<p class='muted'>Метрики отсутствуют.</p>";
+                "<p>Метрики отсутствуют.</p>";
 
             return;
 
@@ -680,49 +626,53 @@ STM.Modal = {
 
         metrics.forEach(metric => {
 
-            const row =
-                document.createElement("div");
+            const row = this.create(
 
-            row.className = "metric-row";
+                "div",
 
-            row.innerHTML =
+                "modal-row"
 
-                `
-                <span>${metric.name}</span>
-                <strong>${metric.value}</strong>
-                `;
+            );
 
-            container.appendChild(row);
+            row.innerHTML = `
+
+                <strong>${metric.name}</strong>
+
+                <span>${metric.value}</span>
+
+            `;
+
+            this.dom.body.appendChild(row);
 
         });
 
     },
 
     /* =======================================================================
-       Render Links
+       Links
     ======================================================================= */
 
-    renderLinks() {
+    renderLinks(project) {
 
-        const container =
-            document.getElementById("modal-links");
+        if (!this.dom.body) return;
 
-        if (!container) return;
+        this.clear(this.dom.body);
 
-        container.innerHTML = "";
+        const links = STM.Loader.getLinks()
 
-        const links =
-            STM.Loader
-                .getLinks()
-                .filter(link =>
-                    link.from === this.currentEntity.id ||
-                    link.to === this.currentEntity.id
-                );
+            .filter(link =>
 
-        if (links.length === 0) {
+                link.from === project.id ||
 
-            container.innerHTML =
-                "<p class='muted'>Связи отсутствуют.</p>";
+                link.to === project.id
+
+            );
+
+        if (!links.length) {
+
+            this.dom.body.innerHTML =
+
+                "<p>Связи отсутствуют.</p>";
 
             return;
 
@@ -731,67 +681,86 @@ STM.Modal = {
         links.forEach(link => {
 
             const projectId =
-                link.from === this.currentEntity.id
+
+                link.from === project.id
+
                     ? link.to
+
                     : link.from;
 
-            const project =
-                STM.Loader
-                    .getProjects()
-                    .find(p => p.id === projectId);
+            const target = STM.Loader
 
-            const row =
-                document.createElement("div");
+                .getProjects()
 
-            row.className = "link-row";
+                .find(p => p.id === projectId);
 
-            row.innerHTML =
+            const row = this.create(
 
-                `
-                <span>${link.type}</span>
-                <strong>${project ? project.name : projectId}</strong>
-                `;
+                "div",
 
-            row.addEventListener("click", () => {
+                "modal-row modal-link"
 
-    openProject(projectId) {
+            );
 
-    this.open(projectId);
+            row.innerHTML = `
 
-},
+                <strong>
 
-            });
+                    ${target?.code || ""}
 
-            container.appendChild(row);
+                </strong>
+
+                <span>
+
+                    ${target?.name || projectId}
+
+                </span>
+
+            `;
+
+            row.addEventListener(
+
+                "click",
+
+                () => {
+
+                    this.open(projectId);
+
+                }
+
+            );
+
+            this.dom.body.appendChild(row);
 
         });
 
     },
 
     /* =======================================================================
-       Render History
+       History
     ======================================================================= */
 
-    renderHistory() {
+    renderHistory(project) {
 
-        const container =
-            document.getElementById("modal-history");
+        if (!this.dom.body) return;
 
-        if (!container) return;
+        this.clear(this.dom.body);
 
-        container.innerHTML = "";
+        const history = STM.Loader
 
-        const history =
-            STM.Loader
-                .getHistory()
-                .filter(item =>
-                    item.projectId === this.currentEntity.id
-                );
+            .getHistory()
 
-        if (history.length === 0) {
+            .filter(item =>
 
-            container.innerHTML =
-                "<p class='muted'>История отсутствует.</p>";
+                item.projectId === project.id
+
+            );
+
+        if (!history.length) {
+
+            this.dom.body.innerHTML =
+
+                "<p>История отсутствует.</p>";
 
             return;
 
@@ -799,89 +768,60 @@ STM.Modal = {
 
         history.forEach(item => {
 
-            const row =
-                document.createElement("div");
+            const row = this.create(
 
-            row.className = "history-row";
+                "div",
 
-            row.innerHTML =
+                "modal-history-row"
 
-                `
-                <div class="history-date">
+            );
 
-                    ${item.date}
+            row.innerHTML = `
+
+                <div>
+
+                    <strong>
+
+                        ${item.date || ""}
+
+                    </strong>
 
                 </div>
 
-                <div class="history-event">
+                <div>
 
-                    ${item.event}
+                    ${item.description || ""}
 
                 </div>
-                `;
 
-            container.appendChild(row);
+            `;
+
+            this.dom.body.appendChild(row);
 
         });
 
     },
-
-    /* =======================================================================
-       Status Dictionary
+        /* =======================================================================
+       Create Element
     ======================================================================= */
 
-    getStatusName(status) {
+    create(tag, className = "") {
 
-        const dictionary = {
+        const element = document.createElement(tag);
 
-            planned: "Запланирован",
+        if (className) {
 
-            active: "В работе",
+            element.className = className;
 
-            completed: "Завершён",
+        }
 
-            paused: "Приостановлен",
-
-            cancelled: "Отменён",
-
-            risk: "Под риском"
-
-        };
-
-        return dictionary[status] || status;
+        return element;
 
     },
 
     /* =======================================================================
-       Helpers
+       Clear Element
     ======================================================================= */
-
-    createBadge(text, modifier = "") {
-
-        const badge =
-            document.createElement("span");
-
-        badge.className =
-            `badge badge-${modifier}`;
-
-        badge.textContent = text;
-
-        return badge;
-
-    },
-
-    createChip(text) {
-
-        const chip =
-            document.createElement("span");
-
-        chip.className = "chip";
-
-        chip.textContent = text;
-
-        return chip;
-
-    },
 
     clear(element) {
 
@@ -890,194 +830,48 @@ STM.Modal = {
         element.innerHTML = "";
 
     },
-      /* =======================================================================
-       Render Focus
+
+    /* =======================================================================
+       Status Dictionary
     ======================================================================= */
 
-    renderFocus(focus) {
+    getStatusName(code) {
 
-        if (!focus) return;
+        const dictionary = {
 
-        this.buildHeader({
+            active: "В реализации",
 
-            name: focus.name,
+            planned: "Планируется",
 
-            description: focus.description,
+            completed: "Завершен",
 
-            status: "active"
+            paused: "Приостановлен",
 
-        });
+            cancelled: "Отменен"
 
-        this.buildTabs();
+        };
 
-        this.clear(this.dom.body);
-
-        const section = document.createElement("section");
-
-        section.className = "modal-section";
-        section.dataset.tab = "overview";
-
-        section.innerHTML = `
-            <h3>Описание фокуса</h3>
-
-            <p>${focus.description || ""}</p>
-
-            <table class="property-table">
-
-                <tr>
-
-                    <td>Проектов</td>
-
-                    <td>${focus.projects ?? "-"}</td>
-
-                </tr>
-
-                <tr>
-
-                    <td>Активных</td>
-
-                    <td>${focus.active ?? "-"}</td>
-
-                </tr>
-
-                <tr>
-
-                    <td>Прогресс</td>
-
-                    <td>${focus.progress ?? 0}%</td>
-
-                </tr>
-
-            </table>
-        `;
-
-        this.dom.body.appendChild(section);
-
-        this.clear(this.dom.footer);
+        return dictionary[code] || code || "";
 
     },
 
     /* =======================================================================
-       Render Program
+       Status Badge
     ======================================================================= */
 
-    renderProgram(program) {
+    createBadge(title, status) {
 
-        if (!program) return;
+        const badge = this.create(
 
-        this.buildHeader({
+            "span",
 
-            name: program.name,
+            `badge badge-${status}`
 
-            description: program.goal,
+        );
 
-            status: "active"
+        badge.textContent = title;
 
-        });
-
-        this.buildTabs();
-
-        this.clear(this.dom.body);
-
-        const section = document.createElement("section");
-
-        section.className = "modal-section";
-        section.dataset.tab = "overview";
-
-        section.innerHTML = `
-            <h3>Цель программы</h3>
-
-            <p>${program.goal}</p>
-
-            <table class="property-table">
-
-                <tr>
-
-                    <td>Прогресс</td>
-
-                    <td>${program.progress ?? 0}%</td>
-
-                </tr>
-
-                <tr>
-
-                    <td>Период</td>
-
-                    <td>${program.period || "-"}</td>
-
-                </tr>
-
-            </table>
-        `;
-
-        this.dom.body.appendChild(section);
-
-        this.clear(this.dom.footer);
-
-    },
-
-    /* =======================================================================
-       Render Risk
-    ======================================================================= */
-
-    renderRisk(risk) {
-
-        if (!risk) return;
-
-        this.buildHeader({
-
-            name: risk.title,
-
-            description: risk.description,
-
-            status: risk.level
-
-        });
-
-        this.buildTabs();
-
-        this.clear(this.dom.body);
-
-        const section = document.createElement("section");
-
-        section.className = "modal-section";
-        section.dataset.tab = "overview";
-
-        section.innerHTML = `
-            <h3>Карточка риска</h3>
-
-            <table class="property-table">
-
-                <tr>
-
-                    <td>Уровень</td>
-
-                    <td>${risk.level}</td>
-
-                </tr>
-
-                <tr>
-
-                    <td>Ответственный</td>
-
-                    <td>${risk.owner || "-"}</td>
-
-                </tr>
-
-                <tr>
-
-                    <td>Описание</td>
-
-                    <td>${risk.description || "-"}</td>
-
-                </tr>
-
-            </table>
-        `;
-
-        this.dom.body.appendChild(section);
-
-        this.clear(this.dom.footer);
+        return badge;
 
     },
 
@@ -1087,7 +881,17 @@ STM.Modal = {
 
     refresh() {
 
-        if (!this.currentEntity) return;
+        if (
+
+            !this.currentEntity ||
+
+            !this.currentType
+
+        ) {
+
+            return;
+
+        }
 
         this.render();
 
@@ -1099,9 +903,7 @@ STM.Modal = {
 
     destroy() {
 
-        this.close();
-
-        this.dom = {};
+        this.hide();
 
         this.currentEntity = null;
 
@@ -1109,9 +911,24 @@ STM.Modal = {
 
         this.currentTab = "overview";
 
-        this.initialized = false;
+        if (this.dom.body) {
+
+            this.clear(this.dom.body);
+
+        }
+
+        if (this.dom.tabs) {
+
+            this.clear(this.dom.tabs);
+
+        }
+
+        if (this.dom.footer) {
+
+            this.clear(this.dom.footer);
+
+        }
 
     }
 
 };
-
