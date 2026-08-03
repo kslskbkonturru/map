@@ -1,10 +1,8 @@
 /******************************************************************************
  * Service Transformation Map (STM)
- * Alpha 0.2 / Build 002.0
+ * Loader
  *
- * loader.js
- *
- * Data Layer
+ * Build 003.1
  ******************************************************************************/
 
 'use strict';
@@ -14,19 +12,29 @@ window.STM = window.STM || {};
 STM.Loader = {
 
     /* =======================================================================
-       Loaded data
+       Data Storage
     ======================================================================= */
 
     data: {
-        program: null,
+
+        program: {},
+
         focuses: [],
+
         projects: [],
+
         links: [],
-        workspace: null,
-        dictionaries: null,
+
+        workspace: {},
+
+        dictionaries: {},
+
         metrics: [],
+
         risks: [],
+
         history: []
+
     },
 
     /* =======================================================================
@@ -56,7 +64,17 @@ STM.Loader = {
     },
 
     /* =======================================================================
-       Load everything
+       Initialize
+    ======================================================================= */
+
+    async initialize() {
+
+        return await this.loadAll();
+
+    },
+
+    /* =======================================================================
+       Load all files
     ======================================================================= */
 
     async loadAll() {
@@ -82,46 +100,66 @@ STM.Loader = {
     },
 
     /* =======================================================================
-       Load one file
+       Load single file
     ======================================================================= */
 
-  async load(url) {
-
-    try {
-
-        const response = await fetch(url);
-
-        const text = await response.text();
+    async load(url) {
 
         try {
 
-            const json = JSON.parse(text);
+            const response = await fetch(url);
+
+            if (!response.ok) {
+
+                throw new Error(`${url} : ${response.status}`);
+
+            }
+
+            const json = await response.json();
 
             console.log("Loaded", url);
 
+            /*
+             * Все JSON Build 003 имеют структуру
+             *
+             * {
+             *    meta:{},
+             *    data: ...
+             * }
+             *
+             * Возвращаем только data.
+             */
+
+            if (
+
+                json &&
+
+                typeof json === "object" &&
+
+                json.hasOwnProperty("data")
+
+            ) {
+
+                return json.data;
+
+            }
+
             return json;
-
-        } catch (e) {
-
-            console.error("JSON ERROR IN:", url);
-
-            console.error(text.substring(0,300));
-
-            throw e;
 
         }
 
-    } catch (error) {
+        catch (error) {
 
-        console.error(error);
+            console.error(error);
 
-        return null;
+            return null;
 
-    }
+        }
 
-},
+    },
+
     /* =======================================================================
-       Getters
+       Generic Getter
     ======================================================================= */
 
     get(name) {
@@ -130,68 +168,100 @@ STM.Loader = {
 
     },
 
+    /* =======================================================================
+       Program
+    ======================================================================= */
+
     getProgram() {
 
-        return this.data.program;
+        return this.data.program || {};
 
     },
 
-    getProjects() {
-
-        return this.data.projects;
-
-    },
+    /* =======================================================================
+       Focuses
+    ======================================================================= */
 
     getFocuses() {
 
-        return this.data.focuses;
+        return this.data.focuses || [];
 
     },
+
+    /* =======================================================================
+       Projects
+    ======================================================================= */
+
+    getProjects() {
+
+        return this.data.projects || [];
+
+    },
+
+    /* =======================================================================
+       Links
+    ======================================================================= */
 
     getLinks() {
 
-        return this.data.links;
+        return this.data.links || [];
 
     },
 
-    getMetrics() {
-
-        return this.data.metrics;
-
-    },
-
-    getRisks() {
-
-        return this.data.risks;
-
-    },
-
-    getHistory() {
-
-        return this.data.history;
-
-    },
+    /* =======================================================================
+       Workspace
+    ======================================================================= */
 
     getWorkspace() {
 
-        return this.data.workspace;
+        return this.data.workspace || {};
 
     },
 
-   getDictionary() {
+    /* =======================================================================
+       Dictionaries
+    ======================================================================= */
 
-    return this.data.dictionaries;
+    getDictionary() {
 
-},
+        return this.data.dictionaries || {};
 
-/* =======================================================================
-   Initialize
-======================================================================= */
+    },
 
-async initialize() {
+    getDictionaries() {
 
-    return await this.loadAll();
+        return this.data.dictionaries || {};
 
-}
+    },
+
+    /* =======================================================================
+       Metrics
+    ======================================================================= */
+
+    getMetrics() {
+
+        return this.data.metrics || [];
+
+    },
+
+    /* =======================================================================
+       Risks
+    ======================================================================= */
+
+    getRisks() {
+
+        return this.data.risks || [];
+
+    },
+
+    /* =======================================================================
+       History
+    ======================================================================= */
+
+    getHistory() {
+
+        return this.data.history || [];
+
+    }
 
 };
