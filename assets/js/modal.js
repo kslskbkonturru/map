@@ -754,11 +754,11 @@ STM.Modal = {
 
             row.addEventListener("click", () => {
 
-                openProject(project){
+    openProject(projectId) {
 
-    this.open(project);
+    this.open(projectId);
 
-}
+},
 
             });
 
