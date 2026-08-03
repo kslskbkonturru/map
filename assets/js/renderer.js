@@ -650,7 +650,7 @@ if (this.dom.programGoal) {
 
             );
 
-        this.renderProjects();
+        this.;
 
         if (STM.SVG) {
 
@@ -740,55 +740,56 @@ if (this.dom.programGoal) {
        RENDER PROJECTS
     ======================================================================= */
 
-    renderProjects() {
+   renderProjects() {
 
-        if (!this.dom.projectLayer) return;
+    if (!this.dom.projectLayer) return;
 
-        this.dom.projectLayer.innerHTML = "";
+    this.dom.projectLayer.innerHTML = "";
 
-        const projects =
+    const projects =
 
-            this.currentFocus
+        this.currentFocus
 
-                ? this.filteredProjects
+            ? this.filteredProjects
 
-                : this.projects;
+            : this.projects;
 
-        if (!projects.length) {
+    if (!projects.length) {
 
-            const empty = this.create(
+        const empty = this.create(
 
-                "div",
+            "div",
 
-                "project-empty"
+            "project-empty"
 
-            );
+        );
 
-            empty.textContent =
+        empty.textContent =
 
-                "Проекты отсутствуют.";
+            "Проекты отсутствуют.";
 
-            this.dom.projectLayer.appendChild(
+        this.dom.projectLayer.appendChild(empty);
 
-                empty
+        return;
 
-            );
+    }
 
-            return;
+    /* Подготовка контейнера */
 
-        }
+    this.dom.projectLayer.style.display = "flex";
+    this.dom.projectLayer.style.flexWrap = "wrap";
+    this.dom.projectLayer.style.alignItems = "flex-start";
+    this.dom.projectLayer.style.gap = "20px";
 
-        projects.forEach(project => {
+    projects.forEach(project => {
 
-            const card =
+        const card = this.createProjectCard(project);
 
-                this.createProjectCard(project);
+        this.dom.projectLayer.appendChild(card);
 
-            this.dom.projectLayer.appendChild(card);
+    });
 
-        });
-
-    },
+},
 
     /* =======================================================================
        CREATE PROJECT CARD
@@ -1708,6 +1709,42 @@ if (this.dom.programGoal) {
 
     },
 
+    /* =======================================================================
+   AUTO LAYOUT
+======================================================================= */
+
+calculateProjectLayout() {
+
+    const layout = {};
+
+    const columnWidth = 340;
+    const rowHeight = 140;
+
+    this.focuses.forEach((focus, column) => {
+
+        const projects = this.filteredProjects.filter(
+
+            p => p.focusId === focus.id
+
+        );
+
+        projects.forEach((project, row) => {
+
+            layout[project.id] = {
+
+                left: 40 + column * columnWidth,
+
+                top: 40 + row * rowHeight
+
+            };
+
+        });
+
+    });
+
+    return layout;
+
+},
     /* =======================================================================
        UPDATE STATUS BAR
     ======================================================================= */
