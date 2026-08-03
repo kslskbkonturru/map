@@ -1,984 +1,249 @@
-/******************************************************************************
- * Service Transformation Map (STM)
- * Renderer
- *
- * Build 003
- * Part 1
- *
- * Инициализация
- * Хранилище состояния
- * Загрузка данных
- * Главный render()
- ******************************************************************************/
+{
+  "meta": {
+    "schema": "stm/projects/v1",
+    "version": "1.0",
+    "updated": "2026-07-30",
+    "author": "Service Transformation Map"
+  },
 
-'use strict';
+  "data": [
 
-window.STM = window.STM || {};
+    {
+      "id": "project-service-catalog",
+      "focusId": "focus-request-management",
 
-STM.Renderer = {
+      "code": "REQ-001",
 
-    /* =======================================================================
-       State
-    ======================================================================= */
+      "name": "Каталог клиентских запросов",
 
-    initialized: false,
+      "shortName": "Каталог запросов",
 
-    dom: {},
+      "description": "Создание единого каталога клиентских запросов с унифицированной структурой и правилами классификации.",
 
-    program: null,
+      "goal": "Обеспечить единый язык описания клиентских запросов.",
 
-    focuses: [],
+      "status": {
+        "code": "active",
+        "title": "В реализации"
+      },
 
-    projects: [],
+      "priority": "high",
 
-    links: [],
+      "impact": "high",
 
-    risks: [],
+      "progress": 70,
 
-    metrics: [],
+      "timeline": {
+        "start": "2026-Q1",
+        "finish": "2026-Q3"
+      },
 
-    workspace: {},
+      "owner": {
+        "name": "",
+        "position": ""
+      },
 
-    dictionaries: {},
+      "tags": [
+        "Методология",
+        "Каталог",
+        "CRM"
+      ],
 
-    history: [],
+      "externalDependencies": [
+        "CRM"
+      ],
 
-    currentFocus: null,
-
-    currentProject: null,
-
-    /* =======================================================================
-       Initialize
-    ======================================================================= */
-
-    initialize() {
-
-        if (this.initialized) {
-            return;
-        }
-
-        this.cacheDom();
-
-        this.initialized = true;
-
-        console.info("Renderer initialized.");
-
+      "detailsPage": "projects/project-service-catalog.html"
     },
 
-    /* =======================================================================
-       Cache DOM
-    ======================================================================= */
+    {
+      "id": "project-routing",
+      "focusId": "focus-request-management",
 
-    cacheDom() {
+      "code": "REQ-002",
 
-        this.dom = {
+      "name": "Маршрутизация клиентских запросов",
 
-            /* Header */
+      "shortName": "Маршрутизация",
 
-            programTitle:
-                document.getElementById("program-title"),
+      "description": "Разработка единой модели распределения клиентских запросов между подразделениями.",
 
-            programGoal:
-                document.getElementById("program-goal"),
+      "goal": "Автоматизировать передачу запросов исполнителям.",
 
-            progress:
-                document.getElementById("program-progress"),
+      "status": {
+        "code": "active",
+        "title": "В реализации"
+      },
 
-            progressValue:
-                document.getElementById("program-progress-value"),
+      "priority": "critical",
 
-            /* Main */
+      "impact": "critical",
 
-            focusList:
-                document.getElementById("focus-list"),
+      "progress": 45,
 
-            projectLayer:
-                document.getElementById("project-layer"),
+      "timeline": {
+        "start": "2026-Q2",
+        "finish": "2027-Q1"
+      },
 
-            riskList:
-                document.getElementById("risk-list"),
+      "owner": {
+        "name": "",
+        "position": ""
+      },
 
-            status:
-                document.getElementById("status-text")
+      "tags": [
+        "Процессы",
+        "CRM"
+      ],
 
-        };
+      "externalDependencies": [
+        "CRM",
+        "Контакт-центр"
+      ],
 
+      "detailsPage": "projects/project-routing.html"
     },
 
-    /* =======================================================================
-       Load Data
-    ======================================================================= */
+    {
+      "id": "project-voc-platform",
+      "focusId": "focus-voc",
 
-    loadData() {
+      "code": "VOC-001",
 
-        this.program =
-            STM.Loader.getProgram()?.data || {};
+      "name": "Платформа Voice of Customer",
 
-        this.focuses =
-            STM.Loader.getFocuses()?.data || [];
+      "shortName": "VoC Platform",
 
-        this.projects =
-            STM.Loader.getProjects()?.data || [];
+      "description": "Создание единой платформы сбора и анализа обратной связи клиентов.",
 
-        this.links =
-            STM.Loader.getLinks()?.data || [];
+      "goal": "Обеспечить централизованный сбор Голоса клиента.",
 
-        this.risks =
-            STM.Loader.getRisks()?.data || [];
+      "status": {
+        "code": "active",
+        "title": "В реализации"
+      },
 
-        this.metrics =
-            STM.Loader.getMetrics()?.data || [];
+      "priority": "high",
 
-        this.workspace =
-            STM.Loader.getWorkspace()?.data || {};
+      "impact": "high",
 
-        this.dictionaries =
-            STM.Loader.getDictionary()?.data || {};
+      "progress": 35,
 
-        this.history =
-            STM.Loader.getHistory()?.data || [];
+      "timeline": {
+        "start": "2026-Q2",
+        "finish": "2027-Q2"
+      },
 
+      "owner": {
+        "name": "",
+        "position": ""
+      },
+
+      "tags": [
+        "VoC",
+        "Опросы",
+        "Аналитика"
+      ],
+
+      "externalDependencies": [
+        "BI"
+      ],
+
+      "detailsPage": "projects/project-voc-platform.html"
     },
 
-    /* =======================================================================
-       Main Render
-    ======================================================================= */
+    {
+      "id": "project-cxi-dashboard",
+      "focusId": "focus-cxi",
 
-    render() {
+      "code": "CXI-001",
 
-        if (!this.initialized) {
+      "name": "Панель аналитики CXI",
 
-            this.initialize();
+      "shortName": "CXI Dashboard",
 
-        }
+      "description": "Создание единой панели мониторинга клиентского опыта.",
 
-        this.loadData();
+      "goal": "Предоставить руководителям единую картину состояния CX.",
 
-        this.renderProgram();
+      "status": {
+        "code": "planned",
+        "title": "Планируется"
+      },
 
-        this.renderGoal();
+      "priority": "medium",
 
-        this.renderProgress();
+      "impact": "high",
 
-        this.renderFocuses();
+      "progress": 10,
 
-        this.renderProjects();
+      "timeline": {
+        "start": "2026-Q3",
+        "finish": "2027-Q4"
+      },
 
-        this.renderRisks();
+      "owner": {
+        "name": "",
+        "position": ""
+      },
 
-        this.renderLinks();
+      "tags": [
+        "CXI",
+        "BI",
+        "Dashboard"
+      ],
 
-        this.renderTimeline();
+      "externalDependencies": [
+        "Power BI"
+      ],
 
-        this.updateStatusBar();
-
-        console.info("Renderer completed.");
-
+      "detailsPage": "projects/project-cxi-dashboard.html"
     },
 
-    /* =======================================================================
-       Refresh
-    ======================================================================= */
+    {
+      "id": "project-service-level-model",
+      "focusId": "focus-service-levels",
 
-    refresh() {
+      "code": "SL-001",
 
-        this.render();
+      "name": "Модель уровней сервиса",
 
-    },
+      "shortName": "Service Levels",
 
-    /* =======================================================================
-       Public getters
-    ======================================================================= */
+      "description": "Разработка корпоративной модели уровней сервиса.",
 
-    getProjects() {
+      "goal": "Определить единые стандарты предоставления сервиса.",
 
-        return this.projects;
+      "status": {
+        "code": "active",
+        "title": "В реализации"
+      },
 
-    },
+      "priority": "high",
 
-    getFocuses() {
+      "impact": "high",
 
-        return this.focuses;
+      "progress": 55,
 
-    },
+      "timeline": {
+        "start": "2026-Q1",
+        "finish": "2026-Q4"
+      },
 
-    getProgram() {
+      "owner": {
+        "name": "",
+        "position": ""
+      },
 
-        return this.program;
+      "tags": [
+        "SLA",
+        "Стандарты"
+      ],
 
-    },
+      "externalDependencies": [],
 
-    getLinks() {
-
-        return this.links;
-
-    },
-
-    getRisks() {
-
-        return this.risks;
-
-    },
-    /* =======================================================================
-       Render Program
-    ======================================================================= */
-
-    renderProgram() {
-
-        if (!this.dom.programTitle) return;
-
-        const name =
-            this.program.name ||
-            "Без названия";
-
-        this.dom.programTitle.textContent = name;
-
-    },
-
-    /* =======================================================================
-       Render Goal
-    ======================================================================= */
-
-    renderGoal() {
-
-        if (!this.dom.programGoal) return;
-
-        let text = "";
-
-        if (this.program.goal) {
-
-            if (typeof this.program.goal === "string") {
-
-                text = this.program.goal;
-
-            }
-
-            else if (this.program.goal.description) {
-
-                text = this.program.goal.description;
-
-            }
-
-            else if (this.program.goal.title) {
-
-                text = this.program.goal.title;
-
-            }
-
-        }
-
-        this.dom.programGoal.textContent =
-
-            text || "Цель программы не задана.";
-
-    },
-
-    /* =======================================================================
-       Render Progress
-    ======================================================================= */
-
-    renderProgress() {
-
-        let progress = 0;
-
-        if (
-
-            this.program.goal &&
-
-            typeof this.program.goal.progress === "number"
-
-        ) {
-
-            progress = this.program.goal.progress;
-
-        }
-
-        else {
-
-            progress = this.calculateProgramProgress();
-
-        }
-
-        progress = Math.round(progress);
-
-        if (this.dom.progress) {
-
-            this.dom.progress.value = progress;
-
-        }
-
-        if (this.dom.progressValue) {
-
-            this.dom.progressValue.textContent =
-
-                progress + "%";
-
-        }
-
-    },
-
-    /* =======================================================================
-       Calculate Program Progress
-    ======================================================================= */
-
-    calculateProgramProgress() {
-
-        if (
-
-            !Array.isArray(this.projects) ||
-
-            this.projects.length === 0
-
-        ) {
-
-            return 0;
-
-        }
-
-        let sum = 0;
-
-        let count = 0;
-
-        this.projects.forEach(project => {
-
-            if (
-
-                typeof project.progress === "number"
-
-            ) {
-
-                sum += project.progress;
-
-                count++;
-
-            }
-
-        });
-
-        if (count === 0) {
-
-            return 0;
-
-        }
-
-        return sum / count;
-
-    },
-
-    /* =======================================================================
-       Status Bar
-    ======================================================================= */
-
-    updateStatusBar() {
-
-        if (!this.dom.status) return;
-
-        const projects = this.projects.length;
-
-        const focuses = this.focuses.length;
-
-        const risks = this.risks.length;
-
-        this.dom.status.textContent =
-
-            `Фокусов: ${focuses} | Проектов: ${projects} | Рисков: ${risks}`;
-
-    },
-    /* =======================================================================
-       Render Focuses
-    ======================================================================= */
-
-    renderFocuses() {
-
-        if (!this.dom.focusList) return;
-
-        this.dom.focusList.innerHTML = "";
-
-        this.focuses.forEach(focus => {
-
-            const card = this.createFocusCard(focus);
-
-            this.dom.focusList.appendChild(card);
-
-        });
-
-    },
-
-    /* =======================================================================
-       Create Focus Card
-    ======================================================================= */
-
-    createFocusCard(focus) {
-
-        const card = document.createElement("div");
-
-        card.className = "focus-card";
-
-        card.dataset.id = focus.id;
-
-        if (
-            this.currentFocus &&
-            this.currentFocus.id === focus.id
-        ) {
-            card.classList.add("active");
-        }
-
-        const projects =
-            this.getProjectsByFocus(focus.id);
-
-        const progress =
-            this.calculateFocusProgress(projects);
-
-        card.innerHTML = `
-
-            <div class="focus-header">
-
-                <div class="focus-title">
-
-                    ${focus.shortName || focus.name}
-
-                </div>
-
-                <div class="focus-progress">
-
-                    ${progress}%
-
-                </div>
-
-            </div>
-
-            <div class="focus-description">
-
-                ${focus.description || ""}
-
-            </div>
-
-            <div class="focus-footer">
-
-                <span>
-
-                    Проектов: ${projects.length}
-
-                </span>
-
-                <span>
-
-                    ${focus.status?.title || ""}
-
-                </span>
-
-            </div>
-
-        `;
-
-        card.addEventListener(
-
-            "click",
-
-            () => {
-
-                this.selectFocus(focus.id);
-
-            }
-
-        );
-
-        return card;
-
-    },
-
-    /* =======================================================================
-       Select Focus
-    ======================================================================= */
-
-    selectFocus(focusId) {
-
-        this.currentFocus =
-
-            this.focuses.find(
-
-                f => f.id === focusId
-
-            ) || null;
-
-        this.renderFocuses();
-
-        this.renderProjects();
-
-        this.renderLinks();
-
-        this.renderTimeline();
-
-    },
-
-    /* =======================================================================
-       Get Projects By Focus
-    ======================================================================= */
-
-    getProjectsByFocus(focusId) {
-
-        return this.projects.filter(
-
-            project =>
-
-                project.focusId === focusId
-
-        );
-
-    },
-
-    /* =======================================================================
-       Calculate Focus Progress
-    ======================================================================= */
-
-    calculateFocusProgress(projects) {
-
-        if (projects.length === 0) {
-
-            return 0;
-
-        }
-
-        let sum = 0;
-
-        let count = 0;
-
-        projects.forEach(project => {
-
-            if (
-
-                typeof project.progress === "number"
-
-            ) {
-
-                sum += project.progress;
-
-                count++;
-
-            }
-
-        });
-
-        if (count === 0) {
-
-            return 0;
-
-        }
-
-        return Math.round(
-
-            sum / count
-
-        );
-
-    },
-    /* =======================================================================
-       Render Projects
-    ======================================================================= */
-
-    renderProjects() {
-
-        if (!this.dom.projectLayer) return;
-
-        this.dom.projectLayer.innerHTML = "";
-
-        let projects = this.projects;
-
-        if (this.currentFocus) {
-
-            projects = this.getProjectsByFocus(
-
-                this.currentFocus.id
-
-            );
-
-        }
-
-        projects.forEach(project => {
-
-            const card = this.createProjectCard(project);
-
-            this.dom.projectLayer.appendChild(card);
-
-        });
-
-    },
-
-    /* =======================================================================
-       Create Project Card
-    ======================================================================= */
-
-    createProjectCard(project) {
-
-        const card = document.createElement("div");
-
-        card.className = "project-card";
-
-        card.dataset.id = project.id;
-
-        const progress =
-
-            typeof project.progress === "number"
-
-                ? project.progress
-
-                : 0;
-
-        const owner =
-
-            project.owner?.name ||
-
-            project.owner ||
-
-            "";
-
-        const status =
-
-            project.status?.title ||
-
-            project.status ||
-
-            "";
-
-        const priority =
-
-            project.priority?.title ||
-
-            project.priority ||
-
-            "";
-
-        const timeline =
-
-            project.timeline
-
-                ? `${project.timeline.start || ""} — ${project.timeline.finish || ""}`
-
-                : "";
-
-        card.innerHTML = `
-
-            <div class="project-header">
-
-                <div class="project-title">
-
-                    ${project.name || "Без названия"}
-
-                </div>
-
-                <div class="project-progress">
-
-                    ${progress}%
-
-                </div>
-
-            </div>
-
-            <div class="project-description">
-
-                ${project.description || ""}
-
-            </div>
-
-            <div class="project-status">
-
-                <strong>Статус:</strong>
-
-                ${status}
-
-            </div>
-
-            <div class="project-owner">
-
-                <strong>Владелец:</strong>
-
-                ${owner}
-
-            </div>
-
-            <div class="project-priority">
-
-                <strong>Приоритет:</strong>
-
-                ${priority}
-
-            </div>
-
-            <div class="project-timeline">
-
-                ${timeline}
-
-            </div>
-
-        `;
-
-        card.addEventListener(
-
-            "click",
-
-            () => {
-
-                this.openProject(project.id);
-
-            }
-
-        );
-
-        return card;
-
-    },
-
-    /* =======================================================================
-       Open Project
-    ======================================================================= */
-
-    openProject(projectId) {
-
-        const project = this.projects.find(
-
-            p => p.id === projectId
-
-        );
-
-        if (!project) return;
-
-        this.currentProject = project;
-
-        if (
-
-            STM.Modal &&
-
-            typeof STM.Modal.open === "function"
-
-        ) {
-
-            STM.Modal.open(
-
-                "project",
-
-                project
-
-            );
-
-        }
-
-    },
-    /* =======================================================================
-       Render Risks
-    ======================================================================= */
-
-    renderRisks() {
-
-        if (!this.dom.riskList) return;
-
-        this.dom.riskList.innerHTML = "";
-
-        this.risks.forEach(risk => {
-
-            const item = document.createElement("div");
-
-            item.className = "risk-card";
-
-            item.innerHTML = `
-
-                <div class="risk-title">
-
-                    ${risk.name || risk.title || "Риск"}
-
-                </div>
-
-                <div class="risk-description">
-
-                    ${risk.description || ""}
-
-                </div>
-
-            `;
-
-            this.dom.riskList.appendChild(item);
-
-        });
-
-    },
-
-    /* =======================================================================
-       Render SVG Links
-    ======================================================================= */
-
-    renderLinks() {
-
-        if (
-
-            STM.SVG &&
-
-            typeof STM.SVG.renderFiltered === "function"
-
-        ) {
-
-            if (this.currentFocus) {
-
-                const ids =
-
-                    this.getProjectsByFocus(
-
-                        this.currentFocus.id
-
-                    ).map(
-
-                        p => p.id
-
-                    );
-
-                STM.SVG.renderFiltered(ids);
-
-            }
-
-            else {
-
-                STM.SVG.renderFiltered();
-
-            }
-
-            return;
-
-        }
-
-        if (
-
-            STM.SVG &&
-
-            typeof STM.SVG.render === "function"
-
-        ) {
-
-            STM.SVG.render(this.links);
-
-        }
-
-    },
-
-    /* =======================================================================
-       Render Timeline
-    ======================================================================= */
-
-    renderTimeline() {
-
-        if (
-
-            !STM.Timeline ||
-
-            typeof STM.Timeline.render !== "function"
-
-        ) {
-
-            return;
-
-        }
-
-        if (this.currentFocus) {
-
-            STM.Timeline.projects =
-
-                this.getProjectsByFocus(
-
-                    this.currentFocus.id
-
-                );
-
-        }
-
-        else {
-
-            STM.Timeline.projects =
-
-                this.projects;
-
-        }
-
-        STM.Timeline.render(this.history);
-
-    },
-
-    /* =======================================================================
-       Find Project
-    ======================================================================= */
-
-    findProject(projectId) {
-
-        return this.projects.find(
-
-            p => p.id === projectId
-
-        ) || null;
-
-    },
-
-    /* =======================================================================
-       Find Focus
-    ======================================================================= */
-
-    findFocus(focusId) {
-
-        return this.focuses.find(
-
-            f => f.id === focusId
-
-        ) || null;
-
-    },
-
-    /* =======================================================================
-       Reset Selection
-    ======================================================================= */
-
-    clearSelection() {
-
-        this.currentFocus = null;
-
-        this.currentProject = null;
-
-    },
-
-    /* =======================================================================
-       Full Refresh
-    ======================================================================= */
-
-    rerender() {
-
-        this.clearSelection();
-
-        this.render();
-
-    },
-
-    /* =======================================================================
-       Destroy
-    ======================================================================= */
-
-    destroy() {
-
-        this.clearSelection();
-
-        if (this.dom.focusList) {
-
-            this.dom.focusList.innerHTML = "";
-
-        }
-
-        if (this.dom.projectLayer) {
-
-            this.dom.projectLayer.innerHTML = "";
-
-        }
-
-        if (this.dom.riskList) {
-
-            this.dom.riskList.innerHTML = "";
-
-        }
-
-        this.initialized = false;
-
+      "detailsPage": "projects/project-service-level-model.html"
     }
 
-};
+  ]
+}
