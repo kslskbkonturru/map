@@ -1,6 +1,6 @@
 /******************************************************************************
  * Service Transformation Map (STM)
- * Alpha 0.2 / Build 002.1
+ * Build 003
  *
  * app.js
  *
@@ -9,21 +9,13 @@
 
 'use strict';
 
-/* ==========================================================================
-   Namespace
-========================================================================== */
-
 window.STM = window.STM || {};
-
-/* ==========================================================================
-   Application
-========================================================================== */
 
 STM.App = {
 
-    version: "0.2.1",
+    version: "0.3.0",
 
-    build: "002.1",
+    build: "003",
 
     initialized: false,
 
@@ -34,15 +26,10 @@ STM.App = {
     modules: [
 
         "Loader",
-
         "Renderer",
-
         "SVG",
-
         "Timeline",
-
         "Filters",
-
         "Modal"
 
     ],
@@ -54,9 +41,7 @@ STM.App = {
     async initialize() {
 
         if (this.initialized) {
-
             return;
-
         }
 
         console.group(
@@ -76,16 +61,10 @@ STM.App = {
             await this.firstRender();
 
             this.initialized = true;
-
             this.started = true;
-
             this.loading = false;
 
-            console.info(
-
-                "STM successfully started."
-
-            );
+            console.info("STM successfully started.");
 
         }
 
@@ -109,11 +88,7 @@ STM.App = {
 
         if (!STM.Loader) {
 
-            throw new Error(
-
-                "Loader module missing."
-
-            );
+            throw new Error("Loader module missing.");
 
         }
 
@@ -133,11 +108,7 @@ STM.App = {
 
             if (!module) {
 
-                console.warn(
-
-                    `${name} module missing.`
-
-                );
+                console.warn(`${name} module missing.`);
 
                 return;
 
@@ -159,67 +130,37 @@ STM.App = {
 
     async firstRender() {
 
-        const program =
+        if (
 
-            STM.Loader.getProgram();
+            STM.Renderer &&
 
-        const focuses =
+            typeof STM.Renderer.render === "function"
 
-            STM.Loader.getFocuses();
+        ) {
 
-        const projects =
-
-            STM.Loader.getProjects();
-
-        const links =
-
-            STM.Loader.getLinks();
-
-        const history =
-
-            STM.Loader.getHistory();
-
-        if (STM.Renderer) {
-
-            STM.Renderer.render({
-
-                program,
-
-                focuses,
-
-                projects,
-
-                links
-
-            });
+            STM.Renderer.render();
 
         }
 
-        if (STM.SVG) {
+        if (
 
-            STM.SVG.render(
+            STM.Filters &&
 
-                links,
+            typeof STM.Filters.populate === "function"
 
-                projects
-
-            );
-
-        }
-
-        if (STM.Timeline) {
-
-            STM.Timeline.render(
-
-                history
-
-            );
-
-        }
-
-        if (STM.Filters) {
+        ) {
 
             STM.Filters.populate();
+
+        }
+
+        if (
+
+            STM.Filters &&
+
+            typeof STM.Filters.apply === "function"
+
+        ) {
 
             STM.Filters.apply();
 
@@ -244,7 +185,7 @@ STM.App = {
     },
 
     /* =======================================================================
-       Reload Data
+       Reload
     ======================================================================= */
 
     async reload() {
@@ -275,15 +216,15 @@ STM.App = {
 
             projects:
 
-                STM.Loader.getProjects()?.length || 0,
+                STM.Loader.getProjects()?.data?.length || 0,
 
             focuses:
 
-                STM.Loader.getFocuses()?.length || 0,
+                STM.Loader.getFocuses()?.data?.length || 0,
 
             links:
 
-                STM.Loader.getLinks()?.length || 0
+                STM.Loader.getLinks()?.data?.length || 0
 
         };
 
