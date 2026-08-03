@@ -128,45 +128,75 @@ STM.App = {
        First Render
     ======================================================================= */
 
-    async firstRender() {
+ async firstRender() {
 
-        if (
+    const program =
+        STM.Loader.getProgram();
 
-            STM.Renderer &&
+    const focuses =
+        STM.Loader.getFocuses();
 
-            typeof STM.Renderer.render === "function"
+    const projects =
+        STM.Loader.getProjects();
 
-        ) {
+    const links =
+        STM.Loader.getLinks();
 
-            STM.Renderer.render();
+    const risks =
+        STM.Loader.getRisks();
 
-        }
+    const metrics =
+        STM.Loader.getMetrics();
 
-        if (
+    const workspace =
+        STM.Loader.getWorkspace();
 
-            STM.Filters &&
+    const dictionaries =
+        STM.Loader.getDictionaries();
 
-            typeof STM.Filters.populate === "function"
+    const history =
+        STM.Loader.getHistory();
 
-        ) {
+    if (
+        STM.Renderer &&
+        typeof STM.Renderer.render === "function"
+    ) {
 
-            STM.Filters.populate();
+        STM.Renderer.render({
 
-        }
+            program,
+            focuses,
+            projects,
+            links,
+            risks,
+            metrics,
+            workspace,
+            dictionaries,
+            history
 
-        if (
+        });
 
-            STM.Filters &&
+    }
 
-            typeof STM.Filters.apply === "function"
+    if (
+        STM.Filters &&
+        typeof STM.Filters.populate === "function"
+    ) {
 
-        ) {
+        STM.Filters.populate();
 
-            STM.Filters.apply();
+    }
 
-        }
+    if (
+        STM.Filters &&
+        typeof STM.Filters.apply === "function"
+    ) {
 
-    },
+        STM.Filters.apply();
+
+    }
+
+}
 
     /* =======================================================================
        Refresh
