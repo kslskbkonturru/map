@@ -241,14 +241,14 @@ STM.Renderer = {
         }
 
         /* -------------------------------------------------------------- */
-        /* Цель программы */
+/* Цель программы */
 
-        if (this.dom.programGoal) {
+if (this.dom.programGoal) {
 
-            this.dom.programGoal.textContent =
-                this.program.goal || "";
+    this.dom.programGoal.textContent =
+        this.program.goal?.title || "";
 
-        }
+}
 
         /* -------------------------------------------------------------- */
         /* Заголовок страницы */
@@ -271,32 +271,32 @@ STM.Renderer = {
        PROGRAM PROGRESS
     ======================================================================= */
 
-    renderProgramProgress() {
+ renderProgramProgress() {
 
-        if (!this.dom.progress) return;
+    if (!this.dom.progress) return;
 
-        let value = Number(this.program.progress);
+    let value = Number(this.program.goal?.progress);
 
-        if (Number.isNaN(value)) {
+    if (Number.isNaN(value)) {
 
-            value = 0;
+        value = 0;
 
-        }
+    }
 
-        value = Math.max(0, Math.min(100, value));
+    value = Math.max(0, Math.min(100, value));
 
-        this.dom.progress.max = 100;
+    this.dom.progress.max = 100;
 
-        this.dom.progress.value = value;
+    this.dom.progress.value = value;
 
-        if (this.dom.progressValue) {
+    if (this.dom.progressValue) {
 
-            this.dom.progressValue.textContent =
-                `${value}%`;
+        this.dom.progressValue.textContent =
+            `${value}%`;
 
-        }
+    }
 
-    },
+},
 
     /* =======================================================================
        PROGRAM STATISTICS
