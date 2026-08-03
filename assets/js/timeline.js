@@ -444,7 +444,7 @@ STM.Timeline = {
 
             () => {
 
-                STM.Modal?.openProject(project.id);
+                STM.Modal.open(project.id);
 
             }
 
