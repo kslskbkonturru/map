@@ -1645,7 +1645,7 @@ STM.Renderer = {
        HELPERS
     ====================================================================== */
 
-    create(tag, className = "") {
+    {   create(tag, className = "") {
 
         const element = document.createElement(tag);
 
