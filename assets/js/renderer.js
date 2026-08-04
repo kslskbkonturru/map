@@ -1,31 +1,33 @@
 /******************************************************************************
  * Service Transformation Map (STM)
- * Renderer
  *
- * Build 003.1
- * Part 1 / 7
+ * renderer.js
  *
+ * Build 004
+ * Part 1 / 8
+ *
+ * Core
  * Initialization
- * State
+ * DOM
  * Data
- * Main render()
+ * Main Render
  ******************************************************************************/
 
-'use strict';
+"use strict";
 
 window.STM = window.STM || {};
 
 STM.Renderer = {
 
-    /* =======================================================================
+    /* ======================================================================
        STATE
-    ======================================================================= */
+    ====================================================================== */
 
     initialized: false,
 
     dom: {},
 
-    program: null,
+    program: {},
 
     focuses: [],
 
@@ -49,17 +51,23 @@ STM.Renderer = {
 
     filteredProjects: [],
 
-    /* =======================================================================
+    projectLayout: {},
+
+    /* ======================================================================
        INITIALIZE
-    ======================================================================= */
+    ====================================================================== */
 
     initialize() {
 
         if (this.initialized) {
+
             return;
+
         }
 
         this.cacheDom();
+
+        this.bindEvents();
 
         this.initialized = true;
 
@@ -67,96 +75,57 @@ STM.Renderer = {
 
     },
 
-    /* =======================================================================
+    /* ======================================================================
        CACHE DOM
-    ======================================================================= */
+    ====================================================================== */
 
     cacheDom() {
 
         this.dom = {
 
             programTitle:
+
                 document.getElementById("program-title"),
 
             programGoal:
+
                 document.getElementById("program-goal"),
 
             progress:
+
                 document.getElementById("program-progress"),
 
             progressValue:
+
                 document.getElementById("program-progress-value"),
 
             focusList:
+
                 document.getElementById("focus-list"),
 
             projectLayer:
+
                 document.getElementById("project-layer"),
 
             riskList:
+
                 document.getElementById("risk-list"),
 
             status:
+
                 document.getElementById("status-text")
 
         };
 
     },
 
-    /* =======================================================================
-       MAIN RENDER
-    ======================================================================= */
+    /* ======================================================================
+       LOAD DATA
+    ====================================================================== */
 
-    render(data = {}) {
+    setData(data = {}) {
 
-        if (!this.initialized) {
-            this.initialize();
-        }
-
-        this.setData(data);
-
-        this.clear();
-
-        this.renderProgram();
-
-        this.renderFocuses();
-
-        this.renderProjects();
-
-        this.renderRisks();
-
-        this.renderMetrics();
-
-        if (STM.SVG) {
-
-            STM.SVG.render(
-                this.links,
-                this.projects
-            );
-
-        }
-
-        if (STM.Timeline) {
-
-            STM.Timeline.render(
-                this.history
-            );
-
-        }
-
-        this.updateStatus();
-
-        console.info("Renderer completed.");
-
-    },
-
-    /* =======================================================================
-       SET DATA
-    ======================================================================= */
-
-    setData(data) {
-
-        const unwrap = value => {
+        const unwrap = (value) => {
 
             if (!value) return [];
 
@@ -171,7 +140,9 @@ STM.Renderer = {
         };
 
         this.program =
-            data.program?.data || data.program || {};
+            data.program?.data ||
+            data.program ||
+            {};
 
         this.focuses =
             unwrap(data.focuses);
@@ -201,57 +172,106 @@ STM.Renderer = {
             data.dictionaries ||
             {};
 
-        this.filteredProjects =
-            [...this.projects];
+        this.filteredProjects = [
+
+            ...this.projects
+
+        ];
 
     },
 
-    /* =======================================================================
+    /* ======================================================================
+       MAIN RENDER
+    ====================================================================== */
+
+    render(data = {}) {
+
+        if (!this.initialized) {
+
+            this.initialize();
+
+        }
+
+        this.setData(data);
+
+        this.clear();
+
+        this.renderProgram();
+
+        this.renderFocusList();
+
+        this.renderProjects();
+
+        this.renderRisks();
+
+        this.refreshConnections();
+
+        this.refreshTimeline();
+
+        this.updateStatus();
+
+        console.info("Renderer completed.");
+
+    },
+
+    /* ======================================================================
        CLEAR
-    ======================================================================= */
+    ====================================================================== */
 
     clear() {
 
-        if (this.dom.focusList)
+        if (this.dom.focusList) {
+
             this.dom.focusList.innerHTML = "";
 
-        if (this.dom.projectLayer)
+        }
+
+        if (this.dom.projectLayer) {
+
             this.dom.projectLayer.innerHTML = "";
 
-        if (this.dom.riskList)
+        }
+
+        if (this.dom.riskList) {
+
             this.dom.riskList.innerHTML = "";
 
+        }
+
     },
-        /* =======================================================================
+        /* ======================================================================
        PROGRAM
-    ======================================================================= */
+    ====================================================================== */
 
     renderProgram() {
 
         if (!this.program) return;
 
-        /* -------------------------------------------------------------- */
-        /* Название программы */
+        /* ---------- Program title ---------- */
 
         if (this.dom.programTitle) {
 
             this.dom.programTitle.textContent =
+
                 this.program.name || "";
 
         }
 
-        /* -------------------------------------------------------------- */
-/* Цель программы */
+        /* ---------- Goal ---------- */
 
-if (this.dom.programGoal) {
+        if (this.dom.programGoal) {
 
-    this.dom.programGoal.textContent =
-        this.program.goal?.title || "";
+            this.dom.programGoal.textContent =
 
-}
+                this.program.goal?.title ||
 
-        /* -------------------------------------------------------------- */
-        /* Заголовок страницы */
+                this.program.goal ||
+
+                "";
+
+        }
+
+        /* ---------- Browser title ---------- */
 
         if (this.program.name) {
 
@@ -259,48 +279,61 @@ if (this.dom.programGoal) {
 
         }
 
-        /* -------------------------------------------------------------- */
-
         this.renderProgramProgress();
 
         this.renderProgramStatistics();
 
     },
 
-    /* =======================================================================
+    /* ======================================================================
        PROGRAM PROGRESS
-    ======================================================================= */
+    ====================================================================== */
 
- renderProgramProgress() {
+    renderProgramProgress() {
 
-    if (!this.dom.progress) return;
+        if (!this.dom.progress) return;
 
-    let value = Number(this.program.goal?.progress);
+        let value = Number(
 
-    if (Number.isNaN(value)) {
+            this.program.goal?.progress ??
 
-        value = 0;
+            this.program.progress ??
 
-    }
+            0
 
-    value = Math.max(0, Math.min(100, value));
+        );
 
-    this.dom.progress.max = 100;
+        if (Number.isNaN(value)) {
 
-    this.dom.progress.value = value;
+            value = 0;
 
-    if (this.dom.progressValue) {
+        }
 
-        this.dom.progressValue.textContent =
-            `${value}%`;
+        value = Math.max(
 
-    }
+            0,
 
-},
+            Math.min(100, value)
 
-    /* =======================================================================
+        );
+
+        this.dom.progress.max = 100;
+
+        this.dom.progress.value = value;
+
+        if (this.dom.progressValue) {
+
+            this.dom.progressValue.textContent =
+
+                value + "%";
+
+        }
+
+    },
+
+    /* ======================================================================
        PROGRAM STATISTICS
-    ======================================================================= */
+    ====================================================================== */
 
     renderProgramStatistics() {
 
@@ -316,27 +349,23 @@ if (this.dom.programGoal) {
 
             activeProjects:
 
-                this.projects.filter(project => {
+                this.projects.filter(project =>
 
-                    const status =
-                        project.status?.code ||
-                        project.status;
+                    (project.status?.code ||
 
-                    return status === "active";
+                     project.status) === "active"
 
-                }).length,
+                ).length,
 
             completedProjects:
 
-                this.projects.filter(project => {
+                this.projects.filter(project =>
 
-                    const status =
-                        project.status?.code ||
-                        project.status;
+                    (project.status?.code ||
 
-                    return status === "completed";
+                     project.status) === "completed"
 
-                }).length,
+                ).length,
 
             risks:
 
@@ -346,80 +375,11 @@ if (this.dom.programGoal) {
 
     },
 
-    /* =======================================================================
-       APPLICATION STATUS
-    ======================================================================= */
+    /* ======================================================================
+       RENDER FOCUS LIST
+    ====================================================================== */
 
-    updateStatus(text = null) {
-
-        if (!this.dom.status) return;
-
-        if (text) {
-
-            this.dom.status.textContent = text;
-
-            return;
-
-        }
-
-        this.dom.status.textContent =
-
-            `Фокусов: ${this.statistics.focuses} · ` +
-
-            `Проектов: ${this.statistics.projects} · ` +
-
-            `Активных: ${this.statistics.activeProjects} · ` +
-
-            `Рисков: ${this.statistics.risks}`;
-
-    },
-
-    /* =======================================================================
-       HELPERS
-    ======================================================================= */
-
-    setText(element, value) {
-
-        if (!element) return;
-
-        element.textContent = value ?? "";
-
-    },
-
-    clearElement(element) {
-
-        if (!element) return;
-
-        element.innerHTML = "";
-
-    },
-
-    append(parent, child) {
-
-        if (!parent || !child) return;
-
-        parent.appendChild(child);
-
-    },
-
-    create(tag, className = "") {
-
-        const element = document.createElement(tag);
-
-        if (className) {
-
-            element.className = className;
-
-        }
-
-        return element;
-
-    },
-        /* =======================================================================
-       RENDER FOCUSES
-    ======================================================================= */
-
-    renderFocuses() {
+    renderFocusList() {
 
         if (!this.dom.focusList) return;
 
@@ -428,14 +388,22 @@ if (this.dom.programGoal) {
         if (!this.focuses.length) {
 
             const empty = this.create(
+
                 "div",
+
                 "focus-empty"
+
             );
 
             empty.textContent =
-                "Фокусные проекты отсутствуют";
 
-            this.dom.focusList.appendChild(empty);
+                "Фокусные проекты отсутствуют.";
+
+            this.dom.focusList.appendChild(
+
+                empty
+
+            );
 
             return;
 
@@ -443,145 +411,145 @@ if (this.dom.programGoal) {
 
         this.focuses.forEach(focus => {
 
-            const card =
-                this.createFocusCard(focus);
+            this.dom.focusList.appendChild(
 
-            this.dom.focusList.appendChild(card);
+                this.createFocusCard(focus)
+
+            );
 
         });
 
     },
 
-    /* =======================================================================
+    /* ======================================================================
        CREATE FOCUS CARD
-    ======================================================================= */
+    ====================================================================== */
 
     createFocusCard(focus) {
 
         const card = this.create(
+
             "div",
-            "focus-card"
+
+            "focus-card card"
+
         );
 
         card.dataset.id = focus.id;
 
-        /* -------------------------------------------------- */
+        /* ---------- Title ---------- */
 
-        const title =
-            this.create(
-                "div",
-                "focus-title"
-            );
+        const title = this.create(
+
+            "h3"
+
+        );
 
         title.textContent =
+
             focus.shortName ||
+
             focus.name ||
-            "Без названия";
 
-        /* -------------------------------------------------- */
+            "";
 
-        const description =
-            this.create(
-                "div",
-                "focus-description"
-            );
+        /* ---------- Description ---------- */
+
+        const description = this.create(
+
+            "div",
+
+            "focus-description"
+
+        );
 
         description.textContent =
-            focus.description || "";
 
-        /* -------------------------------------------------- */
+            focus.description ||
 
-        const progress =
+            "";
+
+        /* ---------- Progress ---------- */
+
+        const progress = this.create(
+
+            "div",
+
+            "focus-progress"
+
+        );
+
+        const progressBar = document.createElement(
+
+            "span"
+
+        );
+
+        progressBar.style.width =
+
             this.calculateFocusProgress(
+
                 focus.id
-            );
 
-        const progressBlock =
-            this.create(
-                "div",
-                "focus-progress"
-            );
+            ) + "%";
 
-        const progressBar =
-            document.createElement(
-                "progress"
-            );
+        progress.appendChild(
 
-        progressBar.max = 100;
-
-        progressBar.value = progress;
-
-        const progressText =
-            this.create(
-                "span",
-                "focus-progress-value"
-            );
-
-        progressText.textContent =
-            progress + "%";
-
-        progressBlock.appendChild(
             progressBar
+
         );
 
-        progressBlock.appendChild(
-            progressText
+        /* ---------- Statistics ---------- */
+
+        const stat = this.create(
+
+            "div",
+
+            "focus-statistics"
+
         );
 
-        /* -------------------------------------------------- */
+        const count = this.projects.filter(
 
-        const statistics =
-            this.create(
-                "div",
-                "focus-statistics"
-            );
+            project =>
 
-        const projects =
-            this.projects.filter(
+                project.focusId === focus.id
 
-                project =>
+        ).length;
 
-                    project.focusId ===
-                    focus.id
+        stat.textContent =
 
-            );
+            count +
 
-        statistics.innerHTML =
+            " проектов";
 
-            "<strong>" +
+        /* ---------- Status ---------- */
 
-            projects.length +
+        const status = this.create(
 
-            "</strong> проектов";
+            "div",
 
-        /* -------------------------------------------------- */
+            "focus-status"
 
-        const status =
-            this.create(
-                "div",
-                "focus-status"
-            );
+        );
 
         status.textContent =
+
             focus.status?.title ||
 
             focus.status ||
 
             "";
 
-        /* -------------------------------------------------- */
-
         card.appendChild(title);
 
         card.appendChild(description);
 
-        card.appendChild(progressBlock);
+        card.appendChild(progress);
 
-        card.appendChild(statistics);
+        card.appendChild(stat);
 
         card.appendChild(status);
-
-        /* -------------------------------------------------- */
 
         card.addEventListener(
 
@@ -590,7 +558,9 @@ if (this.dom.programGoal) {
             () => {
 
                 this.selectFocus(
+
                     focus.id
+
                 );
 
             }
@@ -601,111 +571,19 @@ if (this.dom.programGoal) {
 
     },
 
-    /* =======================================================================
-       SELECT FOCUS
-    ======================================================================= */
-
-    selectFocus(focusId) {
-
-        this.currentFocus = focusId;
-
-        document
-
-            .querySelectorAll(
-                ".focus-card"
-            )
-
-            .forEach(card => {
-
-                card.classList.remove(
-                    "selected"
-                );
-
-            });
-
-        const current =
-
-            document.querySelector(
-
-                `.focus-card[data-id="${focusId}"]`
-
-            );
-
-        if (current) {
-
-            current.classList.add(
-                "selected"
-            );
-
-        }
-
-        this.filteredProjects =
-
-            this.projects.filter(
-
-                project =>
-
-                    project.focusId ===
-                    focusId
-
-            );
-
-        this.;
-
-        if (STM.SVG) {
-
-            STM.SVG.render(
-
-                this.links,
-
-                this.filteredProjects
-
-            );
-
-        }
-
-        if (STM.Filters) {
-
-            STM.Filters.refresh?.();
-
-        }
-
-        this.updateStatus(
-
-            "Выбран фокус: " +
-
-            (
-
-                this.focuses.find(
-
-                    f => f.id === focusId
-
-                )?.name ||
-
-                ""
-
-            )
-
-        );
-
-    },
-
-    /* =======================================================================
+    /* ======================================================================
        CALCULATE FOCUS PROGRESS
-    ======================================================================= */
+    ====================================================================== */
 
     calculateFocusProgress(focusId) {
 
-        const projects =
+        const projects = this.projects.filter(
 
-            this.projects.filter(
+            project =>
 
-                project =>
+                project.focusId === focusId
 
-                    project.focusId ===
-                    focusId
-
-            );
+        );
 
         if (!projects.length) {
 
@@ -713,19 +591,21 @@ if (this.dom.programGoal) {
 
         }
 
-        let total = 0;
+        const total = projects.reduce(
 
-        projects.forEach(project => {
+            (sum, project) =>
 
-            total +=
+                sum +
 
                 Number(
 
                     project.progress || 0
 
-                );
+                ),
 
-        });
+            0
+
+        );
 
         return Math.round(
 
@@ -736,64 +616,153 @@ if (this.dom.programGoal) {
         );
 
     },
-        /* =======================================================================
+        /* ======================================================================
        RENDER PROJECTS
-    ======================================================================= */
+    ====================================================================== */
 
-   renderProjects() {
+    renderProjects() {
 
-    if (!this.dom.projectLayer) return;
+        if (!this.dom.projectLayer) return;
 
-    this.dom.projectLayer.innerHTML = "";
+        this.dom.projectLayer.innerHTML = "";
 
-    const projects =
+        const projects =
 
-        this.currentFocus
+            this.currentFocus
 
-            ? this.filteredProjects
+                ? this.filteredProjects
 
-            : this.projects;
+                : this.projects;
 
-    if (!projects.length) {
+        if (!projects.length) {
 
-        const empty = this.create(
+            const empty = this.create(
 
-            "div",
+                "div",
 
-            "project-empty"
+                "project-empty"
 
-        );
+            );
 
-        empty.textContent =
+            empty.textContent =
 
-            "Проекты отсутствуют.";
+                "Проекты отсутствуют.";
 
-        this.dom.projectLayer.appendChild(empty);
+            this.dom.projectLayer.appendChild(
 
-        return;
+                empty
 
-    }
+            );
 
-    /* Подготовка контейнера */
+            return;
 
-    this.dom.projectLayer.style.display = "flex";
-    this.dom.projectLayer.style.flexWrap = "wrap";
-    this.dom.projectLayer.style.alignItems = "flex-start";
-    this.dom.projectLayer.style.gap = "20px";
+        }
 
-    projects.forEach(project => {
+        /* ---------- Container ---------- */
 
-        const card = this.createProjectCard(project);
+        this.dom.projectLayer.className =
 
-        this.dom.projectLayer.appendChild(card);
+            "project-workspace";
 
-    });
+        /* ---------- Auto Layout ---------- */
 
-},
+        this.projectLayout =
 
-    /* =======================================================================
+            this.calculateProjectLayout(
+
+                projects
+
+            );
+
+        this.projectLayout.forEach(column => {
+
+            this.dom.projectLayer.appendChild(column);
+
+        });
+
+    },
+
+    /* ======================================================================
+       AUTO LAYOUT
+    ====================================================================== */
+
+    calculateProjectLayout(projects) {
+
+        const columns = [];
+
+        this.focuses.forEach(focus => {
+
+            const focusProjects =
+
+                projects.filter(
+
+                    project =>
+
+                        project.focusId ===
+
+                        focus.id
+
+                );
+
+            if (!focusProjects.length) {
+
+                return;
+
+            }
+
+            const column = this.create(
+
+                "div",
+
+                "project-column"
+
+            );
+
+            column.dataset.focus =
+
+                focus.id;
+
+            const header = this.create(
+
+                "div",
+
+                "project-column-title"
+
+            );
+
+            header.textContent =
+
+                focus.shortName ||
+
+                focus.name;
+
+            column.appendChild(header);
+
+            focusProjects.forEach(project => {
+
+                column.appendChild(
+
+                    this.createProjectCard(
+
+                        project
+
+                    )
+
+                );
+
+            });
+
+            columns.push(column);
+
+        });
+
+        return columns;
+
+    },
+
+    /* ======================================================================
        CREATE PROJECT CARD
-    ======================================================================= */
+    ====================================================================== */
 
     createProjectCard(project) {
 
@@ -801,13 +770,17 @@ if (this.dom.programGoal) {
 
             "div",
 
-            "project-card"
+            "project-card card"
 
         );
 
-        card.dataset.id = project.id;
+        card.dataset.id =
 
-        card.dataset.focus = project.focusId;
+            project.id;
+
+        card.dataset.focus =
+
+            project.focusId;
 
         card.dataset.status =
 
@@ -817,27 +790,13 @@ if (this.dom.programGoal) {
 
             "";
 
-        /* ------------------------------------------------------------ */
+        const title = this.create(
 
-        const header =
+            "div",
 
-            this.create(
+            "project-title"
 
-                "div",
-
-                "project-header"
-
-            );
-
-        const title =
-
-            this.create(
-
-                "div",
-
-                "project-title"
-
-            );
+        );
 
         title.textContent =
 
@@ -845,29 +804,7 @@ if (this.dom.programGoal) {
 
             project.name ||
 
-            "Без названия";
-
-        header.appendChild(title);
-
-        /* ------------------------------------------------------------ */
-
-        const code =
-
-            this.create(
-
-                "div",
-
-                "project-code"
-
-            );
-
-        code.textContent =
-
-            project.code ||
-
             "";
-
-        /* ------------------------------------------------------------ */
 
         const description =
 
@@ -885,73 +822,41 @@ if (this.dom.programGoal) {
 
             "";
 
-        /* ------------------------------------------------------------ */
+        const progress = this.create(
 
-        const progressBlock =
+            "div",
 
-            this.create(
+            "progress"
 
-                "div",
+        );
 
-                "project-progress"
+        const bar = this.create(
 
-            );
+            "div",
 
-        const progress =
+            "progress-bar"
 
-            document.createElement(
+        );
 
-                "progress"
+        bar.style.width =
 
-            );
+            Number(
 
-        progress.max = 100;
+                project.progress || 0
 
-        progress.value =
+            ) + "%";
 
-            Number(project.progress || 0);
+        progress.appendChild(bar);
 
-        const progressValue =
+        const footer = this.create(
 
-            this.create(
+            "div",
 
-                "span",
+            "project-footer"
 
-                "project-progress-value"
+        );
 
-            );
-
-        progressValue.textContent =
-
-            progress.value + "%";
-
-        progressBlock.appendChild(progress);
-
-        progressBlock.appendChild(progressValue);
-
-        /* ------------------------------------------------------------ */
-
-        const footer =
-
-            this.create(
-
-                "div",
-
-                "project-footer"
-
-            );
-
-        const status =
-
-            this.create(
-
-                "span",
-
-                "project-status"
-
-            );
-
-        status.textContent =
+        footer.textContent =
 
             project.status?.title ||
 
@@ -959,81 +864,13 @@ if (this.dom.programGoal) {
 
             "";
 
-        footer.appendChild(status);
-
-        if (
-
-            project.timeline &&
-
-            project.timeline.start &&
-
-            project.timeline.finish
-
-        ) {
-
-            const timeline =
-
-                this.create(
-
-                    "span",
-
-                    "project-dates"
-
-                );
-
-            timeline.textContent =
-
-                project.timeline.start +
-
-                " → " +
-
-                project.timeline.finish;
-
-            footer.appendChild(timeline);
-
-        }
-
-        /* ------------------------------------------------------------ */
-
-        card.appendChild(header);
-
-        card.appendChild(code);
+        card.appendChild(title);
 
         card.appendChild(description);
 
-        card.appendChild(progressBlock);
+        card.appendChild(progress);
 
         card.appendChild(footer);
-
-        /* ------------------------------------------------------------ */
-
-        card.addEventListener(
-
-            "mouseenter",
-
-            () => {
-
-                STM.SVG?.highlight(
-
-                    project.id
-
-                );
-
-            }
-
-        );
-
-        card.addEventListener(
-
-            "mouseleave",
-
-            () => {
-
-                STM.SVG?.redraw();
-
-            }
-
-        );
 
         card.addEventListener(
 
@@ -1054,65 +891,212 @@ if (this.dom.programGoal) {
         return card;
 
     },
+        /* ======================================================================
+       SELECT FOCUS
+    ====================================================================== */
 
-    /* =======================================================================
+    selectFocus(focusId) {
+
+        this.currentFocus = focusId;
+
+        this.currentProject = null;
+
+        this.filteredProjects = this.projects.filter(
+
+            project =>
+
+                project.focusId === focusId
+
+        );
+
+        document
+
+            .querySelectorAll(".focus-card")
+
+            .forEach(card => {
+
+                card.classList.remove("selected");
+
+            });
+
+        const selected = document.querySelector(
+
+            `.focus-card[data-id="${focusId}"]`
+
+        );
+
+        if (selected) {
+
+            selected.classList.add("selected");
+
+        }
+
+        this.renderProjects();
+
+        this.refreshConnections();
+
+        this.refreshTimeline();
+
+        const focus = this.focuses.find(
+
+            item => item.id === focusId
+
+        );
+
+        this.updateStatus(
+
+            focus
+
+                ? `Выбран фокус: ${focus.name}`
+
+                : "Фокус выбран"
+
+        );
+
+    },
+
+    /* ======================================================================
        OPEN PROJECT
-    ======================================================================= */
+    ====================================================================== */
 
     openProject(projectId) {
 
-        const project =
+        const project = this.projects.find(
 
-            this.projects.find(
+            p => p.id === projectId
 
-                p =>
-
-                    p.id === projectId
-
-            );
+        );
 
         if (!project) {
+
+            console.warn(
+
+                "Project not found:",
+
+                projectId
+
+            );
 
             return;
 
         }
 
-        this.currentProject =
+        this.currentProject = project;
 
-            project;
+        document
+
+            .querySelectorAll(".project-card")
+
+            .forEach(card => {
+
+                card.classList.remove("selected");
+
+            });
+
+        const selected = document.querySelector(
+
+            `.project-card[data-id="${projectId}"]`
+
+        );
+
+        if (selected) {
+
+            selected.classList.add("selected");
+
+        }
 
         if (
 
             STM.Modal &&
 
-            typeof STM.Modal.open ===
-
-            "function"
+            typeof STM.Modal.open === "function"
 
         ) {
 
-            STM.Modal.open(
-
-                "project",
-
-                project
-
-            );
+            STM.Modal.open(projectId);
 
         }
 
+        this.refreshConnections(projectId);
+
         this.updateStatus(
 
-            "Открыт проект: " +
-
-            project.name
+            `Открыт проект: ${project.name}`
 
         );
 
     },
-        /* =======================================================================
+
+    /* ======================================================================
+       CLEAR SELECTION
+    ====================================================================== */
+
+    clearSelection() {
+
+        this.currentFocus = null;
+
+        this.currentProject = null;
+
+        this.filteredProjects = [
+
+            ...this.projects
+
+        ];
+
+        document
+
+            .querySelectorAll(".selected")
+
+            .forEach(item => {
+
+                item.classList.remove("selected");
+
+            });
+
+        this.renderProjects();
+
+        this.refreshConnections();
+
+        this.refreshTimeline();
+
+        this.updateStatus();
+
+    },
+
+    /* ======================================================================
+       PROJECT LOOKUP
+    ====================================================================== */
+
+    getProject(projectId) {
+
+        return this.projects.find(
+
+            project =>
+
+                project.id === projectId
+
+        );
+
+    },
+
+    /* ======================================================================
+       FOCUS LOOKUP
+    ====================================================================== */
+
+    getFocus(focusId) {
+
+        return this.focuses.find(
+
+            focus =>
+
+                focus.id === focusId
+
+        );
+
+    },
+        /* ======================================================================
        RENDER RISKS
-    ======================================================================= */
+    ====================================================================== */
 
     renderRisks() {
 
@@ -1123,12 +1107,16 @@ if (this.dom.programGoal) {
         if (!this.risks.length) {
 
             const empty = this.create(
+
                 "div",
+
                 "risk-empty"
+
             );
 
             empty.textContent =
-                "Активных рисков нет";
+
+                "Активных рисков нет.";
 
             this.dom.riskList.appendChild(empty);
 
@@ -1139,50 +1127,46 @@ if (this.dom.programGoal) {
         this.risks.forEach(risk => {
 
             const card = this.create(
+
                 "div",
-                "risk-card"
+
+                "attention-item"
+
             );
 
-            card.dataset.id = risk.id || "";
+            card.dataset.id =
+
+                risk.id || "";
 
             const title = this.create(
-                "div",
-                "risk-title"
+
+                "strong"
+
             );
 
             title.textContent =
-                risk.name ||
+
                 risk.title ||
+
+                risk.name ||
+
                 "Без названия";
 
             const description = this.create(
-                "div",
-                "risk-description"
+
+                "p"
+
             );
 
             description.textContent =
-                risk.description || "";
 
-            const footer = this.create(
-                "div",
-                "risk-footer"
-            );
+                risk.description ||
 
-            const level = this.create(
-                "span",
-                "risk-level"
-            );
-
-            level.textContent =
-                risk.level ||
-                risk.priority ||
                 "";
 
-            footer.appendChild(level);
-
             card.appendChild(title);
+
             card.appendChild(description);
-            card.appendChild(footer);
 
             this.dom.riskList.appendChild(card);
 
@@ -1190,11 +1174,13 @@ if (this.dom.programGoal) {
 
     },
 
-    /* =======================================================================
+    /* ======================================================================
        RENDER METRICS
-    ======================================================================= */
+    ====================================================================== */
 
     renderMetrics() {
+
+        this.metricSummary = {};
 
         if (!this.metrics.length) {
 
@@ -1202,34 +1188,42 @@ if (this.dom.programGoal) {
 
         }
 
-        this.metricSummary = {};
-
         this.metrics.forEach(metric => {
 
             const key =
+
                 metric.code ||
+
                 metric.id;
 
             this.metricSummary[key] =
+
                 metric.value;
 
         });
 
     },
 
-    /* =======================================================================
-       RENDER DEPENDENCIES
-    ======================================================================= */
+    /* ======================================================================
+       SVG CONNECTIONS
+    ====================================================================== */
 
-    renderDependencies(projectId = null) {
+    refreshConnections(projectId = null) {
 
-        if (!STM.SVG) {
+        if (
+
+            !STM.SVG ||
+
+            typeof STM.SVG.render !== "function"
+
+        ) {
 
             return;
 
         }
 
         let links =
+
             this.links;
 
         if (projectId) {
@@ -1244,67 +1238,97 @@ if (this.dom.programGoal) {
 
         }
 
+        const projects =
+
+            this.currentFocus
+
+                ? this.filteredProjects
+
+                : this.projects;
+
         STM.SVG.render(
 
             links,
 
-            this.projects
+            projects
 
         );
 
     },
 
-    /* =======================================================================
-       GET PROJECT
-    ======================================================================= */
+    /* ======================================================================
+       TIMELINE
+    ====================================================================== */
 
-    getProject(projectId) {
+    refreshTimeline() {
 
-        return this.projects.find(
+        if (
 
-            project =>
+            !STM.Timeline ||
 
-                project.id === projectId
+            typeof STM.Timeline.render !== "function"
 
-        );
+        ) {
 
-    },
+            return;
 
-    /* =======================================================================
-       GET FOCUS
-    ======================================================================= */
+        }
 
-    getFocus(focusId) {
+        STM.Timeline.render(
 
-        return this.focuses.find(
-
-            focus =>
-
-                focus.id === focusId
+            this.history
 
         );
 
     },
 
-    /* =======================================================================
-       GET RISK
-    ======================================================================= */
+    /* ======================================================================
+       STATUS BAR
+    ====================================================================== */
 
-    getRisk(riskId) {
+    updateStatus(text = null) {
 
-        return this.risks.find(
+        if (!this.dom.status) {
 
-            risk =>
+            return;
 
-                risk.id === riskId
+        }
 
-        );
+        if (text) {
+
+            this.dom.status.textContent =
+
+                text;
+
+            return;
+
+        }
+
+        const focusCount =
+
+            this.focuses.length;
+
+        const projectCount =
+
+            this.projects.length;
+
+        const riskCount =
+
+            this.risks.length;
+
+        this.dom.status.textContent =
+
+            `Фокусов: ${focusCount} · ` +
+
+            `Проектов: ${projectCount} · ` +
+
+            `Рисков: ${riskCount}`;
 
     },
 
-    /* =======================================================================
-       PROJECT LINKS
-    ======================================================================= */
+    /* ======================================================================
+       PROJECT DEPENDENCIES
+    ====================================================================== */
 
     getProjectLinks(projectId) {
 
@@ -1318,25 +1342,9 @@ if (this.dom.programGoal) {
 
     },
 
-    /* =======================================================================
-       EXTERNAL DEPENDENCIES
-    ======================================================================= */
-
-    getExternalDependencies(project) {
-
-        if (!project) {
-
-            return [];
-
-        }
-
-        return project.externalDependencies || [];
-
-    },
-
-    /* =======================================================================
-       HAS RISKS
-    ======================================================================= */
+    /* ======================================================================
+       HAS RISK
+    ====================================================================== */
 
     hasProjectRisk(projectId) {
 
@@ -1347,257 +1355,257 @@ if (this.dom.programGoal) {
         );
 
     },
-        /* =======================================================================
-       REDRAW SVG
-    ======================================================================= */
+        /* ======================================================================
+       SEARCH PROJECTS
+    ====================================================================== */
 
-    redrawConnections() {
+    searchProjects(text = "") {
 
-        if (!STM.SVG) return;
+        const query = text.toLowerCase().trim();
 
-        STM.SVG.render(
+        if (!query) {
 
-            this.links,
+            this.filteredProjects = [
 
-            this.filteredProjects.length
-                ? this.filteredProjects
-                : this.projects
+                ...this.projects
 
-        );
+            ];
 
-    },
-
-    /* =======================================================================
-       REFRESH TIMELINE
-    ======================================================================= */
-
-    refreshTimeline() {
-
-        if (!STM.Timeline) return;
-
-        STM.Timeline.render(
-
-            this.history
-
-        );
-
-    },
-
-    /* =======================================================================
-       REFRESH FILTERS
-    ======================================================================= */
-
-    refreshFilters() {
-
-        if (!STM.Filters) return;
-
-        if (typeof STM.Filters.populate === "function") {
-
-            STM.Filters.populate();
-
-        }
-
-        if (typeof STM.Filters.apply === "function") {
-
-            STM.Filters.apply();
-
-        }
-
-    },
-
-    /* =======================================================================
-       FULL REFRESH
-    ======================================================================= */
-
-    refresh() {
-
-        this.render({
-
-            program: this.program,
-
-            focuses: this.focuses,
-
-            projects: this.projects,
-
-            links: this.links,
-
-            risks: this.risks,
-
-            metrics: this.metrics,
-
-            workspace: this.workspace,
-
-            dictionaries: this.dictionaries,
-
-            history: this.history
-
-        });
-
-    },
-
-    /* =======================================================================
-       RELOAD DATA FROM LOADER
-    ======================================================================= */
-
-    reload() {
-
-        if (!STM.Loader) return;
-
-        this.render({
-
-            program: STM.Loader.getProgram(),
-
-            focuses: STM.Loader.getFocuses(),
-
-            projects: STM.Loader.getProjects(),
-
-            links: STM.Loader.getLinks(),
-
-            risks: STM.Loader.getRisks(),
-
-            metrics: STM.Loader.getMetrics(),
-
-            workspace: STM.Loader.getWorkspace(),
-
-            dictionaries: STM.Loader.getDictionary(),
-
-            history: STM.Loader.getHistory()
-
-        });
-
-    },
-
-    /* =======================================================================
-       APPLY FILTERED PROJECTS
-    ======================================================================= */
-
-    setFilteredProjects(projects = []) {
-
-        this.filteredProjects = projects;
-
-        this.renderProjects();
-
-        this.redrawConnections();
-
-    },
-
-    /* =======================================================================
-       CLEAR FILTERS
-    ======================================================================= */
-
-    clearFilters() {
-
-        this.filteredProjects = [
-
-            ...this.projects
-
-        ];
-
-        this.renderProjects();
-
-        this.redrawConnections();
-
-    },
-
-    /* =======================================================================
-       SELECT PROJECT
-    ======================================================================= */
-
-    selectProject(projectId) {
-
-        this.currentProject =
-
-            this.getProject(projectId);
-
-        if (!this.currentProject) {
+            this.renderProjects();
 
             return;
 
         }
 
-        document
+        this.filteredProjects = this.projects.filter(project => {
 
-            .querySelectorAll(".project-card")
+            return (
 
-            .forEach(card => {
+                (project.name || "")
 
-                card.classList.remove(
+                    .toLowerCase()
 
-                    "selected"
+                    .includes(query)
 
-                );
+                ||
 
-            });
+                (project.shortName || "")
 
-        const card =
+                    .toLowerCase()
 
-            document.querySelector(
+                    .includes(query)
 
-                `.project-card[data-id="${projectId}"]`
+                ||
 
-            );
+                (project.code || "")
 
-        if (card) {
+                    .toLowerCase()
 
-            card.classList.add(
-
-                "selected"
+                    .includes(query)
 
             );
+
+        });
+
+        this.renderProjects();
+
+        this.refreshConnections();
+
+    },
+
+    /* ======================================================================
+       SORT PROJECTS
+    ====================================================================== */
+
+    sortProjects(field = "name") {
+
+        this.filteredProjects.sort((a, b) => {
+
+            switch (field) {
+
+                case "progress":
+
+                    return (b.progress || 0) -
+
+                           (a.progress || 0);
+
+                case "status":
+
+                    return (
+
+                        a.status?.title ||
+
+                        a.status ||
+
+                        ""
+
+                    ).localeCompare(
+
+                        b.status?.title ||
+
+                        b.status ||
+
+                        ""
+
+                    );
+
+                case "code":
+
+                    return (
+
+                        a.code ||
+
+                        ""
+
+                    ).localeCompare(
+
+                        b.code ||
+
+                        ""
+
+                    );
+
+                default:
+
+                    return (
+
+                        a.name ||
+
+                        ""
+
+                    ).localeCompare(
+
+                        b.name ||
+
+                        ""
+
+                    );
+
+            }
+
+        });
+
+        this.renderProjects();
+
+    },
+
+    /* ======================================================================
+       FULL REFRESH
+    ====================================================================== */
+
+    refresh() {
+
+        this.render({
+
+            program:
+
+                this.program,
+
+            focuses:
+
+                this.focuses,
+
+            projects:
+
+                this.projects,
+
+            links:
+
+                this.links,
+
+            risks:
+
+                this.risks,
+
+            metrics:
+
+                this.metrics,
+
+            workspace:
+
+                this.workspace,
+
+            dictionaries:
+
+                this.dictionaries,
+
+            history:
+
+                this.history
+
+        });
+
+    },
+
+    /* ======================================================================
+       RELOAD FROM LOADER
+    ====================================================================== */
+
+    reload() {
+
+        if (!STM.Loader) {
+
+            return;
 
         }
 
-        this.renderDependencies(projectId);
+        this.render({
+
+            program:
+
+                STM.Loader.getProgram(),
+
+            focuses:
+
+                STM.Loader.getFocuses(),
+
+            projects:
+
+                STM.Loader.getProjects(),
+
+            links:
+
+                STM.Loader.getLinks(),
+
+            risks:
+
+                STM.Loader.getRisks(),
+
+            metrics:
+
+                STM.Loader.getMetrics(),
+
+            workspace:
+
+                STM.Loader.getWorkspace(),
+
+            dictionaries:
+
+                STM.Loader.getDictionary(),
+
+            history:
+
+                STM.Loader.getHistory()
+
+        });
 
     },
 
-    /* =======================================================================
-       CLEAR SELECTION
-    ======================================================================= */
-
-    clearSelection() {
-
-        this.currentProject = null;
-
-        this.currentFocus = null;
-
-        document
-
-            .querySelectorAll(
-
-                ".selected"
-
-            )
-
-            .forEach(item => {
-
-                item.classList.remove(
-
-                    "selected"
-
-                );
-
-            });
-
-        this.clearFilters();
-
-    },
-
-    /* =======================================================================
-       RESIZE
-    ======================================================================= */
+    /* ======================================================================
+       WINDOW RESIZE
+    ====================================================================== */
 
     resize() {
 
-        this.redrawConnections();
+        this.refreshConnections();
 
         this.refreshTimeline();
 
     },
 
-    /* =======================================================================
-       WINDOW EVENTS
-    ======================================================================= */
+    /* ======================================================================
+       EVENTS
+    ====================================================================== */
 
     bindEvents() {
 
@@ -1614,152 +1622,28 @@ if (this.dom.programGoal) {
         );
 
     },
-        /* =======================================================================
-       SEARCH PROJECT
-    ======================================================================= */
 
-    searchProjects(text = "") {
+    /* ======================================================================
+       DESTROY
+    ====================================================================== */
 
-        text = text.toLowerCase();
+    destroy() {
 
-        return this.projects.filter(project =>
+        this.currentFocus = null;
 
-            (project.name || "")
-                .toLowerCase()
-                .includes(text)
+        this.currentProject = null;
 
-            ||
+        this.filteredProjects = [];
 
-            (project.shortName || "")
-                .toLowerCase()
-                .includes(text)
+        this.projectLayout = {};
 
-            ||
-
-            (project.code || "")
-                .toLowerCase()
-                .includes(text)
-
-        );
+        this.clear();
 
     },
 
-    /* =======================================================================
-       SEARCH FOCUS
-    ======================================================================= */
-
-    searchFocuses(text = "") {
-
-        text = text.toLowerCase();
-
-        return this.focuses.filter(focus =>
-
-            (focus.name || "")
-                .toLowerCase()
-                .includes(text)
-
-            ||
-
-            (focus.shortName || "")
-                .toLowerCase()
-                .includes(text)
-
-        );
-
-    },
-
-    /* =======================================================================
-       SORT PROJECTS
-    ======================================================================= */
-
-    sortProjects(by = "name") {
-
-        this.projects.sort((a, b) => {
-
-            switch (by) {
-
-                case "progress":
-
-                    return (b.progress || 0) - (a.progress || 0);
-
-                case "status":
-
-                    return (a.status?.title || "")
-                        .localeCompare(
-                            b.status?.title || ""
-                        );
-
-                case "code":
-
-                    return (a.code || "")
-                        .localeCompare(
-                            b.code || ""
-                        );
-
-                default:
-
-                    return (a.name || "")
-                        .localeCompare(
-                            b.name || ""
-                        );
-
-            }
-
-        });
-
-    },
-
-    /* =======================================================================
-   AUTO LAYOUT
-======================================================================= */
-
-calculateProjectLayout() {
-
-    const layout = {};
-
-    const columnWidth = 340;
-    const rowHeight = 140;
-
-    this.focuses.forEach((focus, column) => {
-
-        const projects = this.filteredProjects.filter(
-
-            p => p.focusId === focus.id
-
-        );
-
-        projects.forEach((project, row) => {
-
-            layout[project.id] = {
-
-                left: 40 + column * columnWidth,
-
-                top: 40 + row * rowHeight
-
-            };
-
-        });
-
-    });
-
-    return layout;
-
-},
-    /* =======================================================================
-       UPDATE STATUS BAR
-    ======================================================================= */
-
-    updateStatus(text = "") {
-
-        if (!this.dom.status) return;
-
-        this.dom.status.textContent = text;
-
-    },
-
-    /* =======================================================================
-       CREATE ELEMENT
-    ======================================================================= */
+    /* ======================================================================
+       HELPERS
+    ====================================================================== */
 
     create(tag, className = "") {
 
@@ -1775,11 +1659,7 @@ calculateProjectLayout() {
 
     },
 
-    /* =======================================================================
-       CLEAR ELEMENT
-    ======================================================================= */
-
-    clear(element) {
+    clearElement(element) {
 
         if (!element) return;
 
@@ -1787,56 +1667,271 @@ calculateProjectLayout() {
 
     },
 
-    /* =======================================================================
-       DESTROY
-    ======================================================================= */
+    append(parent, child) {
 
-    destroy() {
+        if (!parent || !child) return;
 
-        this.currentFocus = null;
+        parent.appendChild(child);
 
-        this.currentProject = null;
+    }
 
-        this.filteredProjects = [];
+};
+    /* ======================================================================
+       EXPORT STATE
+    ====================================================================== */
 
-        this.clear(this.dom.focusList);
-
-        this.clear(this.dom.projectLayer);
-
-        this.clear(this.dom.riskList);
-
-    },
-
-    /* =======================================================================
-       STATISTICS
-    ======================================================================= */
-
-    statistics() {
+    exportState() {
 
         return {
 
-            program:
-                this.program?.name || "",
+            currentFocus: this.currentFocus,
 
-            focuses:
-                this.focuses.length,
+            currentProject: this.currentProject?.id || null,
 
-            projects:
-                this.projects.length,
+            filteredProjects: this.filteredProjects.map(
 
-            filtered:
-                this.filteredProjects.length,
+                project => project.id
 
-            links:
-                this.links.length,
-
-            risks:
-                this.risks.length,
-
-            metrics:
-                this.metrics.length
+            )
 
         };
+
+    },
+
+    /* ======================================================================
+       IMPORT STATE
+    ====================================================================== */
+
+    restoreState(state = {}) {
+
+        if (!state) return;
+
+        if (state.currentFocus) {
+
+            this.selectFocus(
+
+                state.currentFocus
+
+            );
+
+        }
+
+        if (state.currentProject) {
+
+            this.openProject(
+
+                state.currentProject
+
+            );
+
+        }
+
+    },
+
+    /* ======================================================================
+       ADD PROJECT
+    ====================================================================== */
+
+    addProject(project) {
+
+        if (!project) return;
+
+        this.projects.push(project);
+
+        this.filteredProjects = [
+
+            ...this.projects
+
+        ];
+
+        this.renderProjects();
+
+        this.refreshConnections();
+
+        this.refreshTimeline();
+
+    },
+
+    /* ======================================================================
+       UPDATE PROJECT
+    ====================================================================== */
+
+    updateProject(project) {
+
+        const index = this.projects.findIndex(
+
+            p => p.id === project.id
+
+        );
+
+        if (index < 0) return;
+
+        this.projects[index] = project;
+
+        this.filteredProjects = [
+
+            ...this.projects
+
+        ];
+
+        this.renderProjects();
+
+        this.refreshConnections();
+
+    },
+
+    /* ======================================================================
+       REMOVE PROJECT
+    ====================================================================== */
+
+    removeProject(projectId) {
+
+        this.projects = this.projects.filter(
+
+            project =>
+
+                project.id !== projectId
+
+        );
+
+        this.filteredProjects = [
+
+            ...this.projects
+
+        ];
+
+        this.renderProjects();
+
+        this.refreshConnections();
+
+    },
+
+    /* ======================================================================
+       ADD LINK
+    ====================================================================== */
+
+    addLink(link) {
+
+        if (!link) return;
+
+        this.links.push(link);
+
+        this.refreshConnections();
+
+    },
+
+    /* ======================================================================
+       REMOVE LINK
+    ====================================================================== */
+
+    removeLink(linkId) {
+
+        this.links = this.links.filter(
+
+            link =>
+
+                link.id !== linkId
+
+        );
+
+        this.refreshConnections();
+
+    },
+
+    /* ======================================================================
+       SAVE WORKSPACE
+    ====================================================================== */
+
+    saveWorkspace() {
+
+        console.info(
+
+            "Workspace changed."
+
+        );
+
+        /*
+            Build 005
+
+            POST /workspace
+
+            или
+
+            download workspace.json
+
+        */
+
+    },
+
+    /* ======================================================================
+       DEBUG
+    ====================================================================== */
+
+    debug() {
+
+        console.group(
+
+            "STM Renderer"
+
+        );
+
+        console.log(
+
+            "Program:",
+
+            this.program
+
+        );
+
+        console.log(
+
+            "Focuses:",
+
+            this.focuses.length
+
+        );
+
+        console.log(
+
+            "Projects:",
+
+            this.projects.length
+
+        );
+
+        console.log(
+
+            "Links:",
+
+            this.links.length
+
+        );
+
+        console.log(
+
+            "Risks:",
+
+            this.risks.length
+
+        );
+
+        console.log(
+
+            "Current Focus:",
+
+            this.currentFocus
+
+        );
+
+        console.log(
+
+            "Current Project:",
+
+            this.currentProject
+
+        );
+
+        console.groupEnd();
 
     }
 
