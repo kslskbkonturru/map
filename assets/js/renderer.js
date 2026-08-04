@@ -1861,7 +1861,28 @@ STM.Renderer = {
         */
 
     },
+/* ======================================================================
+   SET FILTERED PROJECTS
+====================================================================== */
 
+setFilteredProjects(projects = []) {
+
+    this.filteredProjects = Array.isArray(projects)
+        ? projects
+        : [];
+
+    this.renderProjects();
+
+    if (STM.SVG) {
+
+        STM.SVG.render(
+            this.links,
+            this.filteredProjects
+        );
+
+    }
+
+},
     /* ======================================================================
        DEBUG
     ====================================================================== */
