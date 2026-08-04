@@ -1645,7 +1645,7 @@ STM.Renderer = {
        HELPERS
     ====================================================================== */
 
-    {   create(tag, className = "") {
+    create(tag, className = "") {
 
         const element = document.createElement(tag);
 
@@ -1673,9 +1673,7 @@ STM.Renderer = {
 
         parent.appendChild(child);
 
-    }
-
-};
+    },
     /* ======================================================================
        EXPORT STATE
     ====================================================================== */
