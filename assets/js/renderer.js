@@ -51,8 +51,6 @@ STM.Renderer = {
 
     filteredProjects: [],
 
-    projectLayout: {},
-
     /* ======================================================================
        INITIALIZE
     ====================================================================== */
@@ -633,21 +631,23 @@ STM.Renderer = {
                 ? this.filteredProjects
 
                 : this.projects;
-/* ==========================================================
-   Build Layout
-========================================================== */
 
-if (STM.Layout) {
+        /* ==========================================================
+           Build Layout
+        ========================================================== */
 
-    STM.Layout.build(
+        if (STM.Layout) {
 
-        this.focuses,
-        projects,
-        this.workspace
+            STM.Layout.build(
 
-    );
+                this.focuses,
+                projects,
+                this.workspace
 
-}
+            );
+
+        }
+
         if (!projects.length) {
 
             const empty = this.create(
@@ -678,99 +678,15 @@ if (STM.Layout) {
 
             "project-workspace";
 
-        /* ---------- Auto Layout ---------- */
+        /* ---------- Render cards with positions ---------- */
 
-        this.projectLayout =
+        projects.forEach(project => {
 
-            this.calculateProjectLayout(
+            const card = this.createProjectCard(project);
 
-                projects
-
-            );
-
-        this.projectLayout.forEach(column => {
-
-            this.dom.projectLayer.appendChild(column);
+            this.dom.projectLayer.appendChild(card);
 
         });
-
-    },
-
-    /* ======================================================================
-       AUTO LAYOUT
-    ====================================================================== */
-
-    calculateProjectLayout(projects) {
-
-        const columns = [];
-
-        this.focuses.forEach(focus => {
-
-            const focusProjects =
-
-                projects.filter(
-
-                    project =>
-
-                        project.focusId ===
-
-                        focus.id
-
-                );
-
-            if (!focusProjects.length) {
-
-                return;
-
-            }
-
-            const column = this.create(
-
-                "div",
-
-                "project-column"
-
-            );
-
-            column.dataset.focus =
-
-                focus.id;
-
-            const header = this.create(
-
-                "div",
-
-                "project-column-title"
-
-            );
-
-            header.textContent =
-
-                focus.shortName ||
-
-                focus.name;
-
-            column.appendChild(header);
-
-            focusProjects.forEach(project => {
-
-                column.appendChild(
-
-                    this.createProjectCard(
-
-                        project
-
-                    )
-
-                );
-
-            });
-
-            columns.push(column);
-
-        });
-
-        return columns;
 
     },
 
@@ -803,18 +719,20 @@ if (STM.Layout) {
             project.status ||
 
             "";
-/* ==========================================================
-   Position
-========================================================== */
 
-const position =
+        /* ==========================================================
+           Position
+        ========================================================== */
 
-    STM.Layout
-        ? STM.Layout.getPosition(project.id)
-        : { left: 0, top: 0 };
+        const position =
 
-card.style.left = position.left + "px";
-card.style.top  = position.top + "px";
+            STM.Layout
+                ? STM.Layout.getPosition(project.id)
+                : { left: 0, top: 0 };
+
+        card.style.left = position.left + "px";
+        card.style.top  = position.top + "px";
+
         const title = this.create(
 
             "div",
@@ -1659,8 +1577,6 @@ card.style.top  = position.top + "px";
         this.currentProject = null;
 
         this.filteredProjects = [];
-
-        this.projectLayout = {};
 
         this.clear();
 
