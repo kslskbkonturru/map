@@ -1,6 +1,6 @@
 /******************************************************************************
  * Service Transformation Map (STM)
- * Build 003
+ * Build 004.01
  *
  * app.js
  *
@@ -13,9 +13,9 @@ window.STM = window.STM || {};
 
 STM.App = {
 
-    version: "0.3.0",
+    version: "0.4.0",
 
-    build: "003",
+    build: "004.01",
 
     initialized: false,
 
@@ -27,6 +27,7 @@ STM.App = {
 
         "Loader",
         "Renderer",
+        "Layout",
         "SVG",
         "Timeline",
         "Filters",
@@ -128,75 +129,102 @@ STM.App = {
        First Render
     ======================================================================= */
 
- async firstRender() {
+    async firstRender() {
 
-    const program =
-        STM.Loader.getProgram();
+        const program =
+            STM.Loader.getProgram();
 
-    const focuses =
-        STM.Loader.getFocuses();
+        const focuses =
+            STM.Loader.getFocuses();
 
-    const projects =
-        STM.Loader.getProjects();
+        const projects =
+            STM.Loader.getProjects();
 
-    const links =
-        STM.Loader.getLinks();
+        const links =
+            STM.Loader.getLinks();
 
-    const risks =
-        STM.Loader.getRisks();
+        const risks =
+            STM.Loader.getRisks();
 
-    const metrics =
-        STM.Loader.getMetrics();
+        const metrics =
+            STM.Loader.getMetrics();
 
-    const workspace =
-        STM.Loader.getWorkspace();
+        const workspace =
+            STM.Loader.getWorkspace();
 
-    const dictionaries =
-        STM.Loader.getDictionaries();
+        const dictionaries =
+            STM.Loader.getDictionaries();
 
-    const history =
-        STM.Loader.getHistory();
+        const history =
+            STM.Loader.getHistory();
 
-    if (
-        STM.Renderer &&
-        typeof STM.Renderer.render === "function"
-    ) {
+        /* ==========================================================
+           BUILD LAYOUT
+        ========================================================== */
 
-        STM.Renderer.render({
+        if (
+            STM.Layout &&
+            typeof STM.Layout.build === "function"
+        ) {
 
-            program,
-            focuses,
-            projects,
-            links,
-            risks,
-            metrics,
-            workspace,
-            dictionaries,
-            history
+            STM.Layout.build(
 
-        });
+                focuses,
+                projects,
+                workspace
 
-    }
+            );
 
-    if (
-        STM.Filters &&
-        typeof STM.Filters.populate === "function"
-    ) {
+        }
 
-        STM.Filters.populate();
+        /* ==========================================================
+           RENDER
+        ========================================================== */
 
-    }
+        if (
+            STM.Renderer &&
+            typeof STM.Renderer.render === "function"
+        ) {
 
-    if (
-        STM.Filters &&
-        typeof STM.Filters.apply === "function"
-    ) {
+            STM.Renderer.render({
 
-        STM.Filters.apply();
+                program,
+                focuses,
+                projects,
+                links,
+                risks,
+                metrics,
+                workspace,
+                dictionaries,
+                history
 
-    }
+            });
 
-},
+        }
+
+        /* ==========================================================
+           FILTERS
+        ========================================================== */
+
+        if (
+            STM.Filters &&
+            typeof STM.Filters.populate === "function"
+        ) {
+
+            STM.Filters.populate();
+
+        }
+
+        if (
+            STM.Filters &&
+            typeof STM.Filters.apply === "function"
+        ) {
+
+            STM.Filters.apply();
+
+        }
+
+    },
 
     /* =======================================================================
        Refresh
