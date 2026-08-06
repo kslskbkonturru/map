@@ -633,7 +633,21 @@ STM.Renderer = {
                 ? this.filteredProjects
 
                 : this.projects;
+/* ==========================================================
+   Build Layout
+========================================================== */
 
+if (STM.Layout) {
+
+    STM.Layout.build(
+
+        this.focuses,
+        projects,
+        this.workspace
+
+    );
+
+}
         if (!projects.length) {
 
             const empty = this.create(
@@ -789,7 +803,18 @@ STM.Renderer = {
             project.status ||
 
             "";
+/* ==========================================================
+   Position
+========================================================== */
 
+const position =
+
+    STM.Layout
+        ? STM.Layout.getPosition(project.id)
+        : { left: 0, top: 0 };
+
+card.style.left = position.left + "px";
+card.style.top  = position.top + "px";
         const title = this.create(
 
             "div",
