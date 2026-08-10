@@ -586,7 +586,11 @@ STM.Timeline = {
         const marker = document.createElement("div");
         marker.className = "timeline-today";
         marker.style.position = "absolute";
-        marker.style.left = this.calculateOffset(period) + "px";
+        marker.style.left =
+            (
+                this.config.labelWidth +
+                this.calculateOffset(period)
+            ) + "px";
         marker.style.top = "0";
         marker.style.bottom = "0";
         marker.title = `Текущий период: ${period.year} Q${period.quarter}`;
