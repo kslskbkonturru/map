@@ -2,7 +2,7 @@
  * Service Transformation Map (STM)
  * Timeline Engine
  *
- * Build 004.02
+ * Build 004.03
  *
  * Отдельная тестовая версия Timeline.
  * Рабочую Build 004.01 не заменяет.
@@ -69,7 +69,7 @@ STM.Timeline = {
 
         this.initialized = true;
 
-        console.info("Timeline initialized (Build 004.02).");
+        console.info("Timeline initialized (Build 004.03).");
     },
 
     /* ==================================================================
@@ -102,6 +102,7 @@ STM.Timeline = {
             if (!button) return;
 
             this.setScale(button.dataset.scale);
+
         });
     },
 
@@ -125,18 +126,37 @@ STM.Timeline = {
 
         this.projects = this.normalizeArray(loadedProjects);
 
-        if (!this.visibleProjects.length || this.visibleProjects.length > this.projects.length) {
-            this.visibleProjects = [...this.projects];
-        } else {
-            const ids = new Set(this.projects.map(project => project.id));
-            this.visibleProjects = this.visibleProjects.filter(project => ids.has(project.id));
+        if (
+            !this.visibleProjects.length ||
+            this.visibleProjects.length > this.projects.length
+        ) {
 
-            if (!this.visibleProjects.length && this.projects.length) {
+            this.visibleProjects = [...this.projects];
+
+        } else {
+
+            const ids = new Set(
+                this.projects.map(project => project.id)
+            );
+
+            this.visibleProjects =
+                this.visibleProjects.filter(
+                    project => ids.has(project.id)
+                );
+
+            if (
+                !this.visibleProjects.length &&
+                this.projects.length
+            ) {
+
                 this.visibleProjects = [...this.projects];
+
             }
+
         }
 
         this.refresh();
+
     },
 
     /* ==================================================================
@@ -146,9 +166,13 @@ STM.Timeline = {
     refresh() {
 
         this.clear();
+
         this.renderScaleControls();
+
         this.calculateRange();
+
         this.buildTimeline();
+
     },
 
     /* ==================================================================
@@ -157,12 +181,21 @@ STM.Timeline = {
 
     clear() {
 
-        ["header", "body", "controls"].forEach(key => {
+        [
+            "header",
+            "body",
+            "controls",
+            "scale"
+        ].forEach(key => {
 
             if (this.dom[key]) {
+
                 this.dom[key].innerHTML = "";
+
             }
+
         });
+
     },
 
     /* ==================================================================
@@ -174,24 +207,48 @@ STM.Timeline = {
         if (!this.dom.scale) return;
 
         const scales = [
-            { id: "month", title: "Месяц" },
-            { id: "quarter", title: "Квартал" },
-            { id: "year", title: "Год" }
+
+            {
+                id: "month",
+                title: "Месяц"
+            },
+
+            {
+                id: "quarter",
+                title: "Квартал"
+            },
+
+            {
+                id: "year",
+                title: "Год"
+            }
+
         ];
 
         scales.forEach(scale => {
 
-            const button = document.createElement("button");
+            const button =
+                document.createElement("button");
+
             button.type = "button";
-            button.dataset.scale = scale.id;
-            button.textContent = scale.title;
+
+            button.dataset.scale =
+                scale.id;
+
+            button.textContent =
+                scale.title;
+
             button.className =
                 this.currentScale === scale.id
                     ? "active"
                     : "";
 
-            this.dom.scale.appendChild(button);
+            this.dom.scale.appendChild(
+                button
+            );
+
         });
+
     },
 
     /* ==================================================================
@@ -205,71 +262,158 @@ STM.Timeline = {
         this.visibleProjects.forEach(project => {
 
             if (project.timeline?.start) {
-                periods.push(project.timeline.start);
+
+                periods.push(
+                    project.timeline.start
+                );
+
             }
 
             if (project.timeline?.finish) {
-                periods.push(project.timeline.finish);
+
+                periods.push(
+                    project.timeline.finish
+                );
+
             }
+
         });
 
         /* Используем период программы, если он доступен. */
+
         const program =
             STM.Loader &&
             typeof STM.Loader.getProgram === "function"
                 ? STM.Loader.getProgram()
                 : null;
 
-        const programData = program?.data || program || {};
+        const programData =
+            program?.data ||
+            program ||
+            {};
 
         if (programData.period?.start) {
-            periods.push(programData.period.start);
+
+            periods.push(
+                programData.period.start
+            );
+
         }
 
         if (programData.period?.finish) {
-            periods.push(programData.period.finish);
+
+            periods.push(
+                programData.period.finish
+            );
+
         }
 
-        const parsed = periods
-            .map(period => this.parsePeriod(period))
-            .filter(Boolean);
+        const parsed =
+            periods
+                .map(period =>
+                    this.parsePeriod(period)
+                )
+                .filter(Boolean);
 
         if (!parsed.length) {
 
-            const now = new Date();
+            const now =
+                new Date();
+
             this.visibleFrom = {
-                year: now.getFullYear(),
-                quarter: Math.ceil((now.getMonth() + 1) / 3),
-                month: now.getMonth() + 1
+
+                year:
+                    now.getFullYear(),
+
+                quarter:
+                    Math.ceil(
+                        (now.getMonth() + 1) / 3
+                    ),
+
+                month:
+                    now.getMonth() + 1
+
             };
 
             this.visibleTo = {
-                year: this.visibleFrom.year + 1,
+
+                year:
+                    this.visibleFrom.year + 1,
+
                 quarter: 4,
+
                 month: 12
+
             };
 
             return;
+
         }
 
         let min = parsed[0];
+
         let max = parsed[0];
 
         parsed.forEach(period => {
-            if (this.comparePeriods(period, min) < 0) min = period;
-            if (this.comparePeriods(period, max) > 0) max = period;
+
+            if (
+                this.comparePeriods(
+                    period,
+                    min
+                ) < 0
+            ) {
+
+                min = period;
+
+            }
+
+            if (
+                this.comparePeriods(
+                    period,
+                    max
+                ) > 0
+            ) {
+
+                max = period;
+
+            }
+
         });
 
         /* Небольшой запас по краям шкалы. */
-        min = this.shiftQuarter(min, -this.config.paddingQuarters);
-        max = this.shiftQuarter(max, this.config.paddingQuarters);
 
-        if (this.quarterDistance(min, max) < this.config.minYears * 4) {
-            max = this.shiftQuarter(min, this.config.minYears * 4);
+        min =
+            this.shiftQuarter(
+                min,
+                -this.config.paddingQuarters
+            );
+
+        max =
+            this.shiftQuarter(
+                max,
+                this.config.paddingQuarters
+            );
+
+        if (
+            this.quarterDistance(
+                min,
+                max
+            ) <
+            this.config.minYears * 4
+        ) {
+
+            max =
+                this.shiftQuarter(
+                    min,
+                    this.config.minYears * 4
+                );
+
         }
 
         this.visibleFrom = min;
+
         this.visibleTo = max;
+
     },
 
     /* ==================================================================
@@ -279,10 +423,15 @@ STM.Timeline = {
     buildTimeline() {
 
         this.buildHeader();
+
         this.buildTimeAxis();
+
         this.buildProjectRows();
+
         this.buildTodayMarker();
+
         this.buildLegend();
+
     },
 
     /* ==================================================================
@@ -293,17 +442,36 @@ STM.Timeline = {
 
         if (!this.dom.header) return;
 
-        const title = document.createElement("div");
-        title.className = "timeline-title";
-        title.textContent = "Дорожная карта программы";
+        const title =
+            document.createElement("div");
 
-        const subtitle = document.createElement("div");
-        subtitle.className = "timeline-subtitle";
+        title.className =
+            "timeline-title";
+
+        title.textContent =
+            "Дорожная карта программы";
+
+        const subtitle =
+            document.createElement("div");
+
+        subtitle.className =
+            "timeline-subtitle";
+
         subtitle.textContent =
-            `${this.formatPeriod(this.visibleFrom)} → ${this.formatPeriod(this.visibleTo)}`;
+            `${this.formatPeriod(
+                this.visibleFrom
+            )} → ${this.formatPeriod(
+                this.visibleTo
+            )}`;
 
-        this.dom.header.appendChild(title);
-        this.dom.header.appendChild(subtitle);
+        this.dom.header.appendChild(
+            title
+        );
+
+        this.dom.header.appendChild(
+            subtitle
+        );
+
     },
 
     /* ==================================================================
@@ -312,104 +480,263 @@ STM.Timeline = {
 
     buildTimeAxis() {
 
-        if (!this.dom.body || !this.visibleFrom || !this.visibleTo) return;
+        if (
+            !this.dom.body ||
+            !this.visibleFrom ||
+            !this.visibleTo
+        ) {
 
-        const axis = document.createElement("div");
-        axis.className = "timeline-axis";
+            return;
 
-        const label = document.createElement("div");
-        label.className = "timeline-axis-label";
-        label.style.width = this.config.labelWidth + "px";
-        axis.appendChild(label);
-
-        const track = document.createElement("div");
-        track.className = "timeline-axis-track";
-        track.style.position = "relative";
-        track.style.minWidth = this.getTotalWidth() + "px";
-
-        if (this.currentScale === "year") {
-            this.buildYearScale(track);
-        } else if (this.currentScale === "month") {
-            this.buildMonthScale(track);
-        } else {
-            this.buildQuarterScale(track);
         }
 
-        axis.appendChild(track);
-        this.dom.body.appendChild(axis);
+        const axis =
+            document.createElement("div");
+
+        axis.className =
+            "timeline-axis";
+
+        const label =
+            document.createElement("div");
+
+        label.className =
+            "timeline-axis-label";
+
+        label.style.width =
+            this.config.labelWidth + "px";
+
+        axis.appendChild(
+            label
+        );
+
+        const track =
+            document.createElement("div");
+
+        track.className =
+            "timeline-axis-track";
+
+        track.style.position =
+            "relative";
+
+        track.style.minWidth =
+            this.getTotalWidth() + "px";
+
+        if (
+            this.currentScale === "year"
+        ) {
+
+            this.buildYearScale(
+                track
+            );
+
+        } else if (
+            this.currentScale === "month"
+        ) {
+
+            this.buildMonthScale(
+                track
+            );
+
+        } else {
+
+            this.buildQuarterScale(
+                track
+            );
+
+        }
+
+        axis.appendChild(
+            track
+        );
+
+        this.dom.body.appendChild(
+            axis
+        );
+
     },
 
     buildQuarterScale(track) {
 
-        let cursor = this.clonePeriod(this.visibleFrom);
+        let cursor =
+            this.clonePeriod(
+                this.visibleFrom
+            );
+
         let index = 0;
 
-        while (this.comparePeriods(cursor, this.visibleTo) <= 0) {
+        while (
+            this.comparePeriods(
+                cursor,
+                this.visibleTo
+            ) <= 0
+        ) {
 
-            const cell = document.createElement("div");
-            cell.className = "timeline-quarter";
-            cell.style.position = "absolute";
-            cell.style.left = (index * this.config.quarterWidth) + "px";
-            cell.style.width = this.config.quarterWidth + "px";
-            cell.textContent = `${cursor.year} Q${cursor.quarter}`;
+            const cell =
+                document.createElement("div");
 
-            track.appendChild(cell);
+            cell.className =
+                "timeline-quarter";
 
-            cursor = this.shiftQuarter(cursor, 1);
+            cell.style.position =
+                "absolute";
+
+            cell.style.left =
+                (
+                    index *
+                    this.config.quarterWidth
+                ) + "px";
+
+            cell.style.width =
+                this.config.quarterWidth +
+                "px";
+
+            cell.textContent =
+                `${cursor.year} Q${cursor.quarter}`;
+
+            track.appendChild(
+                cell
+            );
+
+            cursor =
+                this.shiftQuarter(
+                    cursor,
+                    1
+                );
+
             index++;
+
         }
+
     },
 
     buildYearScale(track) {
 
-        let cursor = this.clonePeriod(this.visibleFrom);
+        let cursor =
+            this.clonePeriod(
+                this.visibleFrom
+            );
+
         let index = 0;
 
-        while (cursor.year <= this.visibleTo.year) {
+        while (
+            cursor.year <=
+            this.visibleTo.year
+        ) {
 
-            const cell = document.createElement("div");
-            cell.className = "timeline-year";
-            cell.style.position = "absolute";
-            cell.style.left = (index * this.config.yearWidth) + "px";
-            cell.style.width = this.config.yearWidth + "px";
-            cell.textContent = String(cursor.year);
+            const cell =
+                document.createElement("div");
 
-            track.appendChild(cell);
+            cell.className =
+                "timeline-year";
+
+            cell.style.position =
+                "absolute";
+
+            cell.style.left =
+                (
+                    index *
+                    this.config.yearWidth
+                ) + "px";
+
+            cell.style.width =
+                this.config.yearWidth +
+                "px";
+
+            cell.textContent =
+                String(
+                    cursor.year
+                );
+
+            track.appendChild(
+                cell
+            );
 
             cursor = {
-                year: cursor.year + 1,
+
+                year:
+                    cursor.year + 1,
+
                 quarter: 1,
+
                 month: 1
+
             };
+
             index++;
+
         }
+
     },
 
     buildMonthScale(track) {
 
-        let cursor = this.clonePeriod(this.visibleFrom);
-        cursor.month = (cursor.quarter - 1) * 3 + 1;
+        let cursor =
+            this.clonePeriod(
+                this.visibleFrom
+            );
+
+        cursor.month =
+            (cursor.quarter - 1) * 3 + 1;
+
         let index = 0;
 
-        const formatter = new Intl.DateTimeFormat("ru-RU", {
-            month: "short"
-        });
+        const formatter =
+            new Intl.DateTimeFormat(
+                "ru-RU",
+                {
+                    month: "short"
+                }
+            );
 
-        while (this.compareMonths(cursor, this.visibleTo) <= 0) {
+        while (
+            this.compareMonths(
+                cursor,
+                this.visibleTo
+            ) <= 0
+        ) {
 
-            const cell = document.createElement("div");
-            cell.className = "timeline-month";
-            cell.style.position = "absolute";
-            cell.style.left = (index * this.config.monthWidth) + "px";
-            cell.style.width = this.config.monthWidth + "px";
+            const cell =
+                document.createElement("div");
+
+            cell.className =
+                "timeline-month";
+
+            cell.style.position =
+                "absolute";
+
+            cell.style.left =
+                (
+                    index *
+                    this.config.monthWidth
+                ) + "px";
+
+            cell.style.width =
+                this.config.monthWidth +
+                "px";
+
             cell.textContent =
-                `${formatter.format(new Date(cursor.year, cursor.month - 1, 1))} ${cursor.year}`;
+                `${formatter.format(
+                    new Date(
+                        cursor.year,
+                        cursor.month - 1,
+                        1
+                    )
+                )} ${cursor.year}`;
 
-            track.appendChild(cell);
+            track.appendChild(
+                cell
+            );
 
-            cursor = this.shiftMonth(cursor, 1);
+            cursor =
+                this.shiftMonth(
+                    cursor,
+                    1
+                );
+
             index++;
+
         }
+
     },
 
     /* ==================================================================
@@ -420,41 +747,92 @@ STM.Timeline = {
 
         if (!this.dom.body) return;
 
-        const container = document.createElement("div");
-        container.className = "timeline-projects";
+        const container =
+            document.createElement("div");
 
-        this.visibleProjects.forEach(project => {
-            container.appendChild(this.buildProjectRow(project));
-        });
+        container.className =
+            "timeline-projects";
 
-        this.dom.body.appendChild(container);
+        this.visibleProjects.forEach(
+            project => {
+
+                container.appendChild(
+                    this.buildProjectRow(
+                        project
+                    )
+                );
+
+            }
+        );
+
+        this.dom.body.appendChild(
+            container
+        );
+
     },
 
     buildProjectRow(project) {
 
-        const row = document.createElement("div");
-        row.className = "timeline-row";
-        row.dataset.id = project.id || "";
+        const row =
+            document.createElement("div");
 
-        const label = document.createElement("div");
-        label.className = "timeline-label";
-        label.style.width = this.config.labelWidth + "px";
+        row.className =
+            "timeline-row";
+
+        row.dataset.id =
+            project.id || "";
+
+        const label =
+            document.createElement("div");
+
+        label.className =
+            "timeline-label";
+
+        label.style.width =
+            this.config.labelWidth +
+            "px";
+
         label.textContent =
-            project.shortName || project.name || "Без названия";
-        label.title = project.name || "";
+            project.shortName ||
+            project.name ||
+            "Без названия";
 
-        const area = document.createElement("div");
-        area.className = "timeline-row-area";
-        area.style.position = "relative";
-        area.style.minWidth = this.getTotalWidth() + "px";
+        label.title =
+            project.name || "";
 
-        this.addGrid(area);
-        area.appendChild(this.buildProjectBar(project));
+        const area =
+            document.createElement("div");
 
-        row.appendChild(label);
-        row.appendChild(area);
+        area.className =
+            "timeline-row-area";
+
+        area.style.position =
+            "relative";
+
+        area.style.minWidth =
+            this.getTotalWidth() +
+            "px";
+
+        this.addGrid(
+            area
+        );
+
+        area.appendChild(
+            this.buildProjectBar(
+                project
+            )
+        );
+
+        row.appendChild(
+            label
+        );
+
+        row.appendChild(
+            area
+        );
 
         return row;
+
     },
 
     /* ==================================================================
@@ -463,20 +841,44 @@ STM.Timeline = {
 
     addGrid(area) {
 
-        const count = this.getPeriodCount();
-        const width = this.getCellWidth();
+        const count =
+            this.getPeriodCount();
 
-        for (let i = 0; i <= count; i++) {
+        const width =
+            this.getCellWidth();
 
-            const line = document.createElement("span");
-            line.className = "timeline-grid-line";
-            line.style.position = "absolute";
-            line.style.left = (i * width) + "px";
-            line.style.top = "0";
-            line.style.bottom = "0";
+        for (
+            let i = 0;
+            i <= count;
+            i++
+        ) {
 
-            area.appendChild(line);
+            const line =
+                document.createElement("span");
+
+            line.className =
+                "timeline-grid-line";
+
+            line.style.position =
+                "absolute";
+
+            line.style.left =
+                (
+                    i * width
+                ) + "px";
+
+            line.style.top =
+                "0";
+
+            line.style.bottom =
+                "0";
+
+            area.appendChild(
+                line
+            );
+
         }
+
     },
 
     /* ==================================================================
@@ -485,27 +887,67 @@ STM.Timeline = {
 
     buildProjectBar(project) {
 
-        const bar = document.createElement("div");
-        bar.className = "timeline-bar";
-        bar.dataset.id = project.id || "";
+        const bar =
+            document.createElement("div");
 
-        const start = this.parsePeriod(project.timeline?.start);
-        const finish = this.parsePeriod(project.timeline?.finish);
+        bar.className =
+            "timeline-bar";
 
-        if (!start || !finish) {
-            bar.classList.add("no-date");
-            bar.style.left = "0px";
-            bar.style.width = this.getCellWidth() + "px";
+        bar.dataset.id =
+            project.id || "";
+
+        const start =
+            this.parsePeriod(
+                project.timeline?.start
+            );
+
+        const finish =
+            this.parsePeriod(
+                project.timeline?.finish
+            );
+
+        if (
+            !start ||
+            !finish
+        ) {
+
+            bar.classList.add(
+                "no-date"
+            );
+
+            bar.style.left =
+                "0px";
+
+            bar.style.width =
+                this.getCellWidth() +
+                "px";
+
         } else {
-            bar.style.left = this.calculateOffset(start) + "px";
-            bar.style.width = Math.max(
-                this.calculateDuration(start, finish),
-                this.getCellWidth()
-            ) + "px";
+
+            bar.style.left =
+                this.calculateOffset(
+                    start
+                ) + "px";
+
+            bar.style.width =
+                Math.max(
+                    this.calculateDuration(
+                        start,
+                        finish
+                    ),
+                    this.getCellWidth()
+                ) + "px";
+
         }
 
-        const status = this.getStatusCode(project);
-        bar.classList.add(status);
+        const status =
+            this.getStatusCode(
+                project
+            );
+
+        bar.classList.add(
+            status
+        );
 
         bar.textContent =
             project.code ||
@@ -514,35 +956,70 @@ STM.Timeline = {
             "Проект";
 
         bar.title =
-            `${project.name || "Проект"} — ${this.statuses[status] || ""}`;
+            `${project.name || "Проект"} — ${
+                this.statuses[status] || ""
+            }`;
 
-        bar.addEventListener("click", event => {
+        bar.addEventListener(
+            "click",
+            event => {
 
-            event.stopPropagation();
+                event.stopPropagation();
 
-            if (
-                STM.Modal &&
-                typeof STM.Modal.open === "function"
-            ) {
-                STM.Modal.open("project", project);
+                if (
+                    STM.Modal &&
+                    typeof STM.Modal.open ===
+                    "function"
+                ) {
+
+                    STM.Modal.open(
+                        "project",
+                        project
+                    );
+
+                }
+
             }
-        });
+        );
 
-        bar.addEventListener("mouseenter", () => {
+        bar.addEventListener(
+            "mouseenter",
+            () => {
 
-            if (STM.SVG && typeof STM.SVG.highlight === "function") {
-                STM.SVG.highlight(project.id);
+                if (
+                    STM.SVG &&
+                    typeof STM.SVG.highlight ===
+                    "function"
+                ) {
+
+                    STM.SVG.highlight(
+                        project.id
+                    );
+
+                }
+
             }
-        });
+        );
 
-        bar.addEventListener("mouseleave", () => {
+        bar.addEventListener(
+            "mouseleave",
+            () => {
 
-            if (STM.SVG && typeof STM.SVG.redraw === "function") {
-                STM.SVG.redraw();
+                if (
+                    STM.SVG &&
+                    typeof STM.SVG.redraw ===
+                    "function"
+                ) {
+
+                    STM.SVG.redraw();
+
+                }
+
             }
-        });
+        );
 
         return bar;
+
     },
 
     /* ==================================================================
@@ -553,14 +1030,28 @@ STM.Timeline = {
 
         const code =
             project?.status?.code ||
-            (typeof project?.status === "string" ? project.status : "");
+            (
+                typeof project?.status ===
+                "string"
+                    ? project.status
+                    : ""
+            );
 
-        if (Object.prototype.hasOwnProperty.call(this.statuses, code)) {
+        if (
+            Object.prototype.hasOwnProperty.call(
+                this.statuses,
+                code
+            )
+        ) {
+
             return code;
+
         }
 
         /* Не создаём новые статусы. Неизвестное значение считаем active. */
+
         return "active";
+
     },
 
     /* ==================================================================
@@ -569,33 +1060,79 @@ STM.Timeline = {
 
     buildTodayMarker() {
 
-        if (!this.dom.body || !this.visibleFrom || !this.visibleTo) return;
+        if (
+            !this.dom.body ||
+            !this.visibleFrom ||
+            !this.visibleTo
+        ) {
 
-        const today = new Date();
-        const period = {
-            year: today.getFullYear(),
-            quarter: Math.ceil((today.getMonth() + 1) / 3),
-            month: today.getMonth() + 1
-        };
-
-        if (this.comparePeriods(period, this.visibleFrom) < 0 ||
-            this.comparePeriods(period, this.visibleTo) > 0) {
             return;
+
         }
 
-        const marker = document.createElement("div");
-        marker.className = "timeline-today";
-        marker.style.position = "absolute";
+        const today =
+            new Date();
+
+        const period = {
+
+            year:
+                today.getFullYear(),
+
+            quarter:
+                Math.ceil(
+                    (today.getMonth() + 1) / 3
+                ),
+
+            month:
+                today.getMonth() + 1
+
+        };
+
+        if (
+            this.comparePeriods(
+                period,
+                this.visibleFrom
+            ) < 0 ||
+            this.comparePeriods(
+                period,
+                this.visibleTo
+            ) > 0
+        ) {
+
+            return;
+
+        }
+
+        const marker =
+            document.createElement("div");
+
+        marker.className =
+            "timeline-today";
+
+        marker.style.position =
+            "absolute";
+
         marker.style.left =
             (
                 this.config.labelWidth +
-                this.calculateOffset(period)
+                this.calculateOffset(
+                    period
+                )
             ) + "px";
-        marker.style.top = "0";
-        marker.style.bottom = "0";
-        marker.title = `Текущий период: ${period.year} Q${period.quarter}`;
 
-        this.dom.body.appendChild(marker);
+        marker.style.top =
+            "0";
+
+        marker.style.bottom =
+            "0";
+
+        marker.title =
+            `Текущий период: ${period.year} Q${period.quarter}`;
+
+        this.dom.body.appendChild(
+            marker
+        );
+
     },
 
     /* ==================================================================
@@ -606,24 +1143,57 @@ STM.Timeline = {
 
         if (!this.dom.controls) return;
 
-        const title = document.createElement("span");
-        title.className = "timeline-legend-title";
-        title.textContent = "Статус:";
-        this.dom.controls.appendChild(title);
+        const title =
+            document.createElement("span");
 
-        Object.entries(this.statuses).forEach(([code, titleText]) => {
+        title.className =
+            "timeline-legend-title";
 
-            const item = document.createElement("span");
-            item.className = "timeline-legend-item";
+        title.textContent =
+            "Статус:";
 
-            const marker = document.createElement("span");
-            marker.className = `timeline-color ${code}`;
+        this.dom.controls.appendChild(
+            title
+        );
 
-            item.appendChild(marker);
-            item.appendChild(document.createTextNode(titleText));
+        Object.entries(
+            this.statuses
+        ).forEach(
+            ([code, titleText]) => {
 
-            this.dom.controls.appendChild(item);
-        });
+                const item =
+                    document.createElement(
+                        "span"
+                    );
+
+                item.className =
+                    "timeline-legend-item";
+
+                const marker =
+                    document.createElement(
+                        "span"
+                    );
+
+                marker.className =
+                    `timeline-color ${code}`;
+
+                item.appendChild(
+                    marker
+                );
+
+                item.appendChild(
+                    document.createTextNode(
+                        titleText
+                    )
+                );
+
+                this.dom.controls.appendChild(
+                    item
+                );
+
+            }
+        );
+
     },
 
     /* ==================================================================
@@ -632,54 +1202,151 @@ STM.Timeline = {
 
     getCellWidth() {
 
-        if (this.currentScale === "month") return this.config.monthWidth;
-        if (this.currentScale === "year") return this.config.yearWidth;
+        if (
+            this.currentScale ===
+            "month"
+        ) {
+
+            return this.config.monthWidth;
+
+        }
+
+        if (
+            this.currentScale ===
+            "year"
+        ) {
+
+            return this.config.yearWidth;
+
+        }
+
         return this.config.quarterWidth;
+
     },
 
     getPeriodCount() {
 
-        if (!this.visibleFrom || !this.visibleTo) return 0;
+        if (
+            !this.visibleFrom ||
+            !this.visibleTo
+        ) {
 
-        if (this.currentScale === "month") {
-            return this.monthDistance(this.visibleFrom, this.visibleTo) + 1;
+            return 0;
+
         }
 
-        if (this.currentScale === "year") {
-            return this.visibleTo.year - this.visibleFrom.year + 1;
+        if (
+            this.currentScale ===
+            "month"
+        ) {
+
+            return (
+                this.monthDistance(
+                    this.visibleFrom,
+                    this.visibleTo
+                ) + 1
+            );
+
         }
 
-        return this.quarterDistance(this.visibleFrom, this.visibleTo) + 1;
+        if (
+            this.currentScale ===
+            "year"
+        ) {
+
+            return (
+                this.visibleTo.year -
+                this.visibleFrom.year +
+                1
+            );
+
+        }
+
+        return (
+            this.quarterDistance(
+                this.visibleFrom,
+                this.visibleTo
+            ) + 1
+        );
+
     },
 
     getTotalWidth() {
-        return this.getPeriodCount() * this.getCellWidth();
+
+        return (
+            this.getPeriodCount() *
+            this.getCellWidth()
+        );
+
     },
 
     setScale(scale) {
 
-        if (!["month", "quarter", "year"].includes(scale)) return;
+        if (
+            ![
+                "month",
+                "quarter",
+                "year"
+            ].includes(scale)
+        ) {
 
-        this.currentScale = scale;
+            return;
+
+        }
+
+        this.currentScale =
+            scale;
+
         this.refresh();
+
     },
 
     zoomIn() {
 
-        if (this.currentScale === "year") {
-            this.setScale("quarter");
-        } else if (this.currentScale === "quarter") {
-            this.setScale("month");
+        if (
+            this.currentScale ===
+            "year"
+        ) {
+
+            this.setScale(
+                "quarter"
+            );
+
+        } else if (
+            this.currentScale ===
+            "quarter"
+        ) {
+
+            this.setScale(
+                "month"
+            );
+
         }
+
     },
 
     zoomOut() {
 
-        if (this.currentScale === "month") {
-            this.setScale("quarter");
-        } else if (this.currentScale === "quarter") {
-            this.setScale("year");
+        if (
+            this.currentScale ===
+            "month"
+        ) {
+
+            this.setScale(
+                "quarter"
+            );
+
+        } else if (
+            this.currentScale ===
+            "quarter"
+        ) {
+
+            this.setScale(
+                "year"
+            );
+
         }
+
     },
 
     /* ==================================================================
@@ -688,35 +1355,116 @@ STM.Timeline = {
 
     calculateOffset(period) {
 
-        if (!period || !this.visibleFrom) return 0;
+        if (
+            !period ||
+            !this.visibleFrom
+        ) {
 
-        if (this.currentScale === "month") {
-            return this.monthDistance(this.visibleFrom, period) * this.config.monthWidth;
+            return 0;
+
         }
 
-        if (this.currentScale === "year") {
-            return (period.year - this.visibleFrom.year) * this.config.yearWidth;
+        if (
+            this.currentScale ===
+            "month"
+        ) {
+
+            return (
+                this.monthDistance(
+                    this.visibleFrom,
+                    period
+                ) *
+                this.config.monthWidth
+            );
+
         }
 
-        return this.quarterDistance(this.visibleFrom, period) * this.config.quarterWidth;
-    },
+        if (
+            this.currentScale ===
+            "year"
+        ) {
 
-    calculateDuration(start, finish) {
-
-        if (!start || !finish) return this.getCellWidth();
-
-        if (this.currentScale === "month") {
-            return (this.monthDistance(start, finish) + 1) * this.config.monthWidth;
-        }
-
-        if (this.currentScale === "year") {
-            return Math.max(
-                (finish.year - start.year + 1) * this.config.yearWidth,
+            return (
+                (
+                    period.year -
+                    this.visibleFrom.year
+                ) *
                 this.config.yearWidth
             );
+
         }
 
-        return (this.quarterDistance(start, finish) + 1) * this.config.quarterWidth;
+        return (
+            this.quarterDistance(
+                this.visibleFrom,
+                period
+            ) *
+            this.config.quarterWidth
+        );
+
+    },
+
+    calculateDuration(
+        start,
+        finish
+    ) {
+
+        if (
+            !start ||
+            !finish
+        ) {
+
+            return this.getCellWidth();
+
+        }
+
+        if (
+            this.currentScale ===
+            "month"
+        ) {
+
+            return (
+                (
+                    this.monthDistance(
+                        start,
+                        finish
+                    ) + 1
+                ) *
+                this.config.monthWidth
+            );
+
+        }
+
+        if (
+            this.currentScale ===
+            "year"
+        ) {
+
+            return Math.max(
+
+                (
+                    finish.year -
+                    start.year +
+                    1
+                ) *
+                this.config.yearWidth,
+
+                this.config.yearWidth
+
+            );
+
+        }
+
+        return (
+            (
+                this.quarterDistance(
+                    start,
+                    finish
+                ) + 1
+            ) *
+            this.config.quarterWidth
+        );
+
     },
 
     /* ==================================================================
@@ -725,37 +1473,79 @@ STM.Timeline = {
 
     parsePeriod(value) {
 
-        if (!value || typeof value !== "string") return null;
+        if (
+            !value ||
+            typeof value !==
+            "string"
+        ) {
 
-        const match = value.match(/^(\d{4})-Q([1-4])$/i);
+            return null;
 
-        if (match) {
-            const year = Number(match[1]);
-            const quarter = Number(match[2]);
-
-            return {
-                year,
-                quarter,
-                month: (quarter - 1) * 3 + 1
-            };
         }
 
-        const monthMatch = value.match(/^(\d{4})-(\d{2})$/);
+        const match =
+            value.match(
+                /^(\d{4})-Q([1-4])$/i
+            );
+
+        if (match) {
+
+            const year =
+                Number(match[1]);
+
+            const quarter =
+                Number(match[2]);
+
+            return {
+
+                year,
+
+                quarter,
+
+                month:
+                    (quarter - 1) * 3 + 1
+
+            };
+
+        }
+
+        const monthMatch =
+            value.match(
+                /^(\d{4})-(\d{2})$/
+            );
 
         if (monthMatch) {
-            const year = Number(monthMatch[1]);
-            const month = Number(monthMatch[2]);
 
-            if (month >= 1 && month <= 12) {
+            const year =
+                Number(monthMatch[1]);
+
+            const month =
+                Number(monthMatch[2]);
+
+            if (
+                month >= 1 &&
+                month <= 12
+            ) {
+
                 return {
+
                     year,
+
                     month,
-                    quarter: Math.ceil(month / 3)
+
+                    quarter:
+                        Math.ceil(
+                            month / 3
+                        )
+
                 };
+
             }
+
         }
 
         return null;
+
     },
 
     formatPeriod(period) {
@@ -763,62 +1553,144 @@ STM.Timeline = {
         if (!period) return "";
 
         return `${period.year}-Q${period.quarter}`;
+
     },
 
     clonePeriod(period) {
+
         return {
-            year: period.year,
-            quarter: period.quarter,
-            month: period.month
+
+            year:
+                period.year,
+
+            quarter:
+                period.quarter,
+
+            month:
+                period.month
+
         };
+
     },
 
     comparePeriods(a, b) {
 
-        if (a.year !== b.year) return a.year - b.year;
-        return a.quarter - b.quarter;
+        if (
+            a.year !==
+            b.year
+        ) {
+
+            return (
+                a.year -
+                b.year
+            );
+
+        }
+
+        return (
+            a.quarter -
+            b.quarter
+        );
+
     },
 
     compareMonths(a, b) {
 
-        const left = a.year * 12 + (a.month - 1);
-        const right = b.year * 12 + (b.month - 1);
+        const left =
+            a.year * 12 +
+            (a.month - 1);
 
-        return left - right;
+        const right =
+            b.year * 12 +
+            (b.month - 1);
+
+        return (
+            left -
+            right
+        );
+
     },
 
     quarterDistance(a, b) {
-        return (b.year - a.year) * 4 + (b.quarter - a.quarter);
+
+        return (
+            (b.year - a.year) * 4 +
+            (b.quarter - a.quarter)
+        );
+
     },
 
     monthDistance(a, b) {
-        return (b.year - a.year) * 12 + (b.month - a.month);
+
+        return (
+            (b.year - a.year) * 12 +
+            (b.month - a.month)
+        );
+
     },
 
-    shiftQuarter(period, amount) {
+    shiftQuarter(
+        period,
+        amount
+    ) {
 
-        const index = period.year * 4 + (period.quarter - 1) + amount;
-        const year = Math.floor(index / 4);
-        const quarter = (index % 4) + 1;
+        const index =
+            period.year * 4 +
+            (period.quarter - 1) +
+            amount;
+
+        const year =
+            Math.floor(
+                index / 4
+            );
+
+        const quarter =
+            (index % 4) + 1;
 
         return {
+
             year,
+
             quarter,
-            month: (quarter - 1) * 3 + 1
+
+            month:
+                (quarter - 1) * 3 + 1
+
         };
+
     },
 
-    shiftMonth(period, amount) {
+    shiftMonth(
+        period,
+        amount
+    ) {
 
-        const index = period.year * 12 + (period.month - 1) + amount;
-        const year = Math.floor(index / 12);
-        const month = (index % 12) + 1;
+        const index =
+            period.year * 12 +
+            (period.month - 1) +
+            amount;
+
+        const year =
+            Math.floor(
+                index / 12
+            );
+
+        const month =
+            (index % 12) + 1;
 
         return {
+
             year,
+
             month,
-            quarter: Math.ceil(month / 3)
+
+            quarter:
+                Math.ceil(
+                    month / 3
+                )
+
         };
+
     },
 
     /* ==================================================================
@@ -827,61 +1699,123 @@ STM.Timeline = {
 
     setProjects(projects = []) {
 
-        this.visibleProjects = this.normalizeArray(projects);
+        this.visibleProjects =
+            this.normalizeArray(
+                projects
+            );
+
         this.refresh();
+
     },
 
     getProjects() {
-        return [...this.visibleProjects];
+
+        return [
+            ...this.visibleProjects
+        ];
+
     },
 
     normalizeArray(value) {
 
-        if (Array.isArray(value)) return value;
-        if (Array.isArray(value?.data)) return value.data;
+        if (
+            Array.isArray(value)
+        ) {
+
+            return value;
+
+        }
+
+        if (
+            Array.isArray(
+                value?.data
+            )
+        ) {
+
+            return value.data;
+
+        }
+
         return [];
+
     },
 
     synchronize() {
 
         if (
             STM.Renderer &&
-            Array.isArray(STM.Renderer.filteredProjects)
+            Array.isArray(
+                STM.Renderer.filteredProjects
+            )
         ) {
-            this.visibleProjects = [...STM.Renderer.filteredProjects];
+
+            this.visibleProjects =
+                [
+                    ...STM.Renderer
+                        .filteredProjects
+                ];
+
         } else {
-            this.visibleProjects = [...this.projects];
+
+            this.visibleProjects =
+                [
+                    ...this.projects
+                ];
+
         }
 
         this.refresh();
+
     },
 
     /* ==================================================================
        PROJECT INTERACTION
     ================================================================== */
 
-    highlightProject(projectId) {
+    highlightProject(
+        projectId
+    ) {
 
-        document.querySelectorAll(".timeline-row").forEach(row => {
-            row.classList.toggle(
-                "selected",
-                row.dataset.id === projectId
+        document
+            .querySelectorAll(
+                ".timeline-row"
+            )
+            .forEach(
+                row => {
+
+                    row.classList.toggle(
+
+                        "selected",
+
+                        row.dataset.id ===
+                        projectId
+
+                    );
+
+                }
             );
-        });
+
     },
 
-    scrollToProject(projectId) {
+    scrollToProject(
+        projectId
+    ) {
 
-        const row = document.querySelector(
-            `.timeline-row[data-id="${projectId}"]`
-        );
+        const row =
+            document.querySelector(
+                `.timeline-row[data-id="${projectId}"]`
+            );
 
         if (!row) return;
 
         row.scrollIntoView({
+
             behavior: "smooth",
+
             block: "center"
+
         });
+
     },
 
     /* ==================================================================
@@ -889,7 +1823,9 @@ STM.Timeline = {
     ================================================================== */
 
     resize() {
+
         this.refresh();
+
     },
 
     /* ==================================================================
@@ -898,13 +1834,37 @@ STM.Timeline = {
 
     debug() {
 
-        console.group("STM Timeline Build 004.02");
-        console.log("Scale:", this.currentScale);
-        console.log("Visible from:", this.visibleFrom);
-        console.log("Visible to:", this.visibleTo);
-        console.log("Projects:", this.visibleProjects.length);
-        console.log("Status vocabulary:", this.statuses);
+        console.group(
+            "STM Timeline Build 004.03"
+        );
+
+        console.log(
+            "Scale:",
+            this.currentScale
+        );
+
+        console.log(
+            "Visible from:",
+            this.visibleFrom
+        );
+
+        console.log(
+            "Visible to:",
+            this.visibleTo
+        );
+
+        console.log(
+            "Projects:",
+            this.visibleProjects.length
+        );
+
+        console.log(
+            "Status vocabulary:",
+            this.statuses
+        );
+
         console.groupEnd();
+
     }
 
 };
