@@ -2,7 +2,7 @@
  * Service Transformation Map (STM)
  * Timeline Engine
  *
- * Build 004.03
+ * Build 004.04 (Refactored)
  *
  * Отдельная тестовая версия Timeline.
  * Рабочую Build 004.01 не заменяет.
@@ -14,6 +14,9 @@
  * - использовать только фиксированные статусы;
  * - поддерживать фильтрацию проектов;
  * - не менять Renderer / Layout / App.
+ *
+ * Рефакторинг: устранены дублирующиеся паттерны,
+ * добавлены общие методы для построения шкалы и расчёта позиций.
  ******************************************************************************/
 
 "use strict";
@@ -69,7 +72,7 @@ STM.Timeline = {
 
         this.initialized = true;
 
-        console.info("Timeline initialized (Build 004.03).");
+        console.info("Timeline initialized (Build 004.04).");
     },
 
     /* ==================================================================
@@ -475,7 +478,7 @@ STM.Timeline = {
     },
 
     /* ==================================================================
-       TIME AXIS
+       TIME AXIS (рефакторинг – общий метод построения шкалы)
     ================================================================== */
 
     buildTimeAxis() {
@@ -521,29 +524,8 @@ STM.Timeline = {
         track.style.minWidth =
             this.getTotalWidth() + "px";
 
-        if (
-            this.currentScale === "year"
-        ) {
-
-            this.buildYearScale(
-                track
-            );
-
-        } else if (
-            this.currentScale === "month"
-        ) {
-
-            this.buildMonthScale(
-                track
-            );
-
-        } else {
-
-            this.buildQuarterScale(
-                track
-            );
-
-        }
+        // Построение шкалы в зависимости от текущего масштаба
+        this.buildScale(track);
 
         axis.appendChild(
             track
@@ -555,27 +537,54 @@ STM.Timeline = {
 
     },
 
-    buildQuarterScale(track) {
+    /**
+     * Универсальный метод построения шкалы.
+     * В зависимости от currentScale вызывает соответствующий форматтер.
+     */
+    buildScale(track) {
 
-        let cursor =
-            this.clonePeriod(
-                this.visibleFrom
-            );
+        const scaleConfigs = {
+            month: {
+                stepFn: this.shiftMonth.bind(this),
+                formatFn: this.formatMonthCell.bind(this),
+                width: this.config.monthWidth,
+                compare: this.compareMonths.bind(this),
+                getSteps: this.monthDistance.bind(this)
+            },
+            quarter: {
+                stepFn: this.shiftQuarter.bind(this),
+                formatFn: this.formatQuarterCell.bind(this),
+                width: this.config.quarterWidth,
+                compare: this.comparePeriods.bind(this),
+                getSteps: this.quarterDistance.bind(this)
+            },
+            year: {
+                stepFn: this.shiftYear.bind(this),
+                formatFn: this.formatYearCell.bind(this),
+                width: this.config.yearWidth,
+                compare: this.compareYears.bind(this),
+                getSteps: this.yearDistance.bind(this)
+            }
+        };
 
+        const cfg = scaleConfigs[this.currentScale];
+        if (!cfg) return;
+
+        let cursor = this.clonePeriod(this.visibleFrom);
+        // Для года не нужны quarter/month, но clonePeriod вернёт объект с year, quarter, month
+        // Мы будем использовать только year для года, остальное не важно.
         let index = 0;
 
-        while (
-            this.comparePeriods(
-                cursor,
-                this.visibleTo
-            ) <= 0
-        ) {
+        // Функция сравнения должна корректно работать для выбранного масштаба
+        const maxValue = (this.currentScale === 'year') ? this.visibleTo.year : this.visibleTo;
+
+        while (cfg.compare(cursor, maxValue) <= 0) {
 
             const cell =
                 document.createElement("div");
 
             cell.className =
-                "timeline-quarter";
+                `timeline-${this.currentScale}`; // добавляет класс 'timeline-month', 'timeline-quarter', 'timeline-year'
 
             cell.style.position =
                 "absolute";
@@ -583,22 +592,22 @@ STM.Timeline = {
             cell.style.left =
                 (
                     index *
-                    this.config.quarterWidth
+                    cfg.width
                 ) + "px";
 
             cell.style.width =
-                this.config.quarterWidth +
+                cfg.width +
                 "px";
 
             cell.textContent =
-                `${cursor.year} Q${cursor.quarter}`;
+                cfg.formatFn(cursor);
 
             track.appendChild(
                 cell
             );
 
             cursor =
-                this.shiftQuarter(
+                cfg.stepFn(
                     cursor,
                     1
                 );
@@ -609,77 +618,8 @@ STM.Timeline = {
 
     },
 
-    buildYearScale(track) {
-
-        let cursor =
-            this.clonePeriod(
-                this.visibleFrom
-            );
-
-        let index = 0;
-
-        while (
-            cursor.year <=
-            this.visibleTo.year
-        ) {
-
-            const cell =
-                document.createElement("div");
-
-            cell.className =
-                "timeline-year";
-
-            cell.style.position =
-                "absolute";
-
-            cell.style.left =
-                (
-                    index *
-                    this.config.yearWidth
-                ) + "px";
-
-            cell.style.width =
-                this.config.yearWidth +
-                "px";
-
-            cell.textContent =
-                String(
-                    cursor.year
-                );
-
-            track.appendChild(
-                cell
-            );
-
-            cursor = {
-
-                year:
-                    cursor.year + 1,
-
-                quarter: 1,
-
-                month: 1
-
-            };
-
-            index++;
-
-        }
-
-    },
-
-    buildMonthScale(track) {
-
-        let cursor =
-            this.clonePeriod(
-                this.visibleFrom
-            );
-
-        cursor.month =
-            (cursor.quarter - 1) * 3 + 1;
-
-        let index = 0;
-
+    /* Форматтеры для ячеек шкалы */
+    formatMonthCell(period) {
         const formatter =
             new Intl.DateTimeFormat(
                 "ru-RU",
@@ -687,56 +627,37 @@ STM.Timeline = {
                     month: "short"
                 }
             );
+        const date = new Date(
+            period.year,
+            period.month - 1,
+            1
+        );
+        return `${formatter.format(date)} ${period.year}`;
+    },
 
-        while (
-            this.compareMonths(
-                cursor,
-                this.visibleTo
-            ) <= 0
-        ) {
+    formatQuarterCell(period) {
+        return `${period.year} Q${period.quarter}`;
+    },
 
-            const cell =
-                document.createElement("div");
+    formatYearCell(period) {
+        return String(period.year);
+    },
 
-            cell.className =
-                "timeline-month";
+    /* Функции сдвига для каждого масштаба */
+    shiftYear(period, amount) {
+        return {
+            year: period.year + amount,
+            quarter: 1,
+            month: 1
+        };
+    },
 
-            cell.style.position =
-                "absolute";
+    compareYears(a, b) {
+        return a.year - b.year;
+    },
 
-            cell.style.left =
-                (
-                    index *
-                    this.config.monthWidth
-                ) + "px";
-
-            cell.style.width =
-                this.config.monthWidth +
-                "px";
-
-            cell.textContent =
-                `${formatter.format(
-                    new Date(
-                        cursor.year,
-                        cursor.month - 1,
-                        1
-                    )
-                )} ${cursor.year}`;
-
-            track.appendChild(
-                cell
-            );
-
-            cursor =
-                this.shiftMonth(
-                    cursor,
-                    1
-                );
-
-            index++;
-
-        }
-
+    yearDistance(a, b) {
+        return b.year - a.year;
     },
 
     /* ==================================================================
@@ -1089,14 +1010,7 @@ STM.Timeline = {
         };
 
         if (
-            this.comparePeriods(
-                period,
-                this.visibleFrom
-            ) < 0 ||
-            this.comparePeriods(
-                period,
-                this.visibleTo
-            ) > 0
+            !this.isPeriodVisible(period)
         ) {
 
             return;
@@ -1131,6 +1045,20 @@ STM.Timeline = {
 
         this.dom.body.appendChild(
             marker
+        );
+
+    },
+
+    /**
+     * Проверяет, входит ли период в видимый диапазон.
+     */
+    isPeriodVisible(period) {
+
+        if (!period || !this.visibleFrom || !this.visibleTo) return false;
+
+        return (
+            this.comparePeriods(period, this.visibleFrom) >= 0 &&
+            this.comparePeriods(period, this.visibleTo) <= 0
         );
 
     },
@@ -1197,7 +1125,7 @@ STM.Timeline = {
     },
 
     /* ==================================================================
-       SCALE HELPERS
+       SCALE HELPERS (унифицированные методы)
     ================================================================== */
 
     getCellWidth() {
@@ -1235,39 +1163,26 @@ STM.Timeline = {
 
         }
 
-        if (
-            this.currentScale ===
-            "month"
-        ) {
+        // Используем общий метод для получения количества шагов в текущем масштабе
+        return this.getStepsCount(this.visibleFrom, this.visibleTo);
 
-            return (
-                this.monthDistance(
-                    this.visibleFrom,
-                    this.visibleTo
-                ) + 1
-            );
+    },
 
+    /**
+     * Возвращает количество шагов (месяцев, кварталов или лет) между двумя периодами
+     * в зависимости от текущего масштаба.
+     */
+    getStepsCount(from, to) {
+
+        const scale = this.currentScale;
+
+        if (scale === "month") {
+            return this.monthDistance(from, to) + 1;
+        } else if (scale === "year") {
+            return this.yearDistance(from, to) + 1;
+        } else { // quarter
+            return this.quarterDistance(from, to) + 1;
         }
-
-        if (
-            this.currentScale ===
-            "year"
-        ) {
-
-            return (
-                this.visibleTo.year -
-                this.visibleFrom.year +
-                1
-            );
-
-        }
-
-        return (
-            this.quarterDistance(
-                this.visibleFrom,
-                this.visibleTo
-            ) + 1
-        );
 
     },
 
@@ -1350,7 +1265,7 @@ STM.Timeline = {
     },
 
     /* ==================================================================
-       POSITION / DURATION
+       POSITION / DURATION (унифицированные расчёты)
     ================================================================== */
 
     calculateOffset(period) {
@@ -1364,43 +1279,29 @@ STM.Timeline = {
 
         }
 
-        if (
-            this.currentScale ===
-            "month"
-        ) {
+        const steps = this.getStepsCount(this.visibleFrom, period) - 1; // -1 потому что distance возвращает разницу шагов, а нам нужно количество ячеек до периода
+        // Однако getStepsCount возвращает количество шагов от from до to включительно (distance + 1).
+        // Чтобы получить смещение, нужно использовать чистую разницу без +1.
+        // Для этого используем соответствующий distance напрямую.
 
-            return (
-                this.monthDistance(
-                    this.visibleFrom,
-                    period
-                ) *
-                this.config.monthWidth
-            );
+        return this.getRawDistance(this.visibleFrom, period) * this.getCellWidth();
 
+    },
+
+    /**
+     * Возвращает "сырое" расстояние между периодами (без +1) в единицах текущего масштаба.
+     */
+    getRawDistance(from, to) {
+
+        const scale = this.currentScale;
+
+        if (scale === "month") {
+            return this.monthDistance(from, to);
+        } else if (scale === "year") {
+            return this.yearDistance(from, to);
+        } else {
+            return this.quarterDistance(from, to);
         }
-
-        if (
-            this.currentScale ===
-            "year"
-        ) {
-
-            return (
-                (
-                    period.year -
-                    this.visibleFrom.year
-                ) *
-                this.config.yearWidth
-            );
-
-        }
-
-        return (
-            this.quarterDistance(
-                this.visibleFrom,
-                period
-            ) *
-            this.config.quarterWidth
-        );
 
     },
 
@@ -1418,57 +1319,18 @@ STM.Timeline = {
 
         }
 
-        if (
-            this.currentScale ===
-            "month"
-        ) {
+        const steps =
+            this.getRawDistance(start, finish) + 1; // длительность = количество шагов между start и finish + 1
 
-            return (
-                (
-                    this.monthDistance(
-                        start,
-                        finish
-                    ) + 1
-                ) *
-                this.config.monthWidth
-            );
-
-        }
-
-        if (
-            this.currentScale ===
-            "year"
-        ) {
-
-            return Math.max(
-
-                (
-                    finish.year -
-                    start.year +
-                    1
-                ) *
-                this.config.yearWidth,
-
-                this.config.yearWidth
-
-            );
-
-        }
-
-        return (
-            (
-                this.quarterDistance(
-                    start,
-                    finish
-                ) + 1
-            ) *
-            this.config.quarterWidth
+        return Math.max(
+            steps * this.getCellWidth(),
+            this.getCellWidth()
         );
 
     },
 
     /* ==================================================================
-       PERIOD PARSING
+       PERIOD PARSING (без изменений)
     ================================================================== */
 
     parsePeriod(value) {
@@ -1835,7 +1697,7 @@ STM.Timeline = {
     debug() {
 
         console.group(
-            "STM Timeline Build 004.03"
+            "STM Timeline Build 004.04 (Refactored)"
         );
 
         console.log(
