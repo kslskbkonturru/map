@@ -1,13 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>Service Transformation Map — Build 002.0</title>
+    <title>Service Transformation Map — Build 004.01</title>
 
     <link rel="stylesheet" href="assets/css/reset.css">
     <link rel="stylesheet" href="assets/css/variables.css">
@@ -15,197 +11,89 @@
     <link rel="stylesheet" href="assets/css/components.css">
     <link rel="stylesheet" href="assets/css/modal.css">
     <link rel="stylesheet" href="assets/css/timeline.css">
-
 </head>
 
 <body>
-
 <div id="app">
 
-    <!-- ==========================================================
-         HEADER
-    =========================================================== -->
-
     <header id="app-header">
-
         <div>
-
             <h1>Service Transformation Map</h1>
-
             <p id="program-title">Загрузка...</p>
-
         </div>
 
         <div>
-
             <span>Прогресс</span>
-
-            <progress
-                id="program-progress"
-                value="0"
-                max="100">
-            </progress>
-
-            <strong id="program-progress-value">
-
-                0%
-
-            </strong>
-
+            <progress id="program-progress" value="0" max="100"></progress>
+            <strong id="program-progress-value">0%</strong>
         </div>
-
     </header>
 
-    <!-- ==========================================================
-         PROGRAM GOAL
-    =========================================================== -->
-
     <section id="goal-panel">
-
         <h2>Цель программы</h2>
-
         <p id="program-goal"></p>
-
     </section>
-
-    <!-- ==========================================================
-         WORKSPACE
-    =========================================================== -->
 
     <main id="workspace">
 
-        <!-- Focuses -->
-
         <aside id="focus-panel">
-
             <h2>Фокусы</h2>
-
             <div id="focus-list"></div>
-
         </aside>
 
-        <!-- Map -->
-
         <section id="map-panel">
-
             <div id="map-toolbar">
-
-                <button data-view="roadmap">
-                    Дорожная карта
-                </button>
-
-                <button data-view="dependencies">
-                    Зависимости
-                </button>
-
-                <button data-view="owners">
-                    По владельцам
-                </button>
-
+                <button data-view="roadmap">Дорожная карта</button>
+                <button data-view="dependencies">Зависимости</button>
+                <button data-view="owners">По владельцам</button>
             </div>
 
             <div id="map-container">
-
                 <svg id="connection-layer"></svg>
-
                 <div id="project-layer"></div>
-
             </div>
-
         </section>
 
-        <!-- Risks -->
-
         <aside id="attention-panel">
-
             <h2>Требует внимания</h2>
-
             <div id="risk-list"></div>
-
         </aside>
 
     </main>
 
-    <!-- ==========================================================
-         TIMELINE
-    =========================================================== -->
-
     <section id="timeline-panel">
-
         <h2>Timeline</h2>
-
         <div id="timeline">
-
-            <!-- Панель управления -->
-
             <div id="timeline-controls"></div>
-
-            <!-- Переключатель масштаба -->
-
             <div id="timeline-scale"></div>
-
-            <!-- Верхняя шкала -->
-
             <div id="timeline-header"></div>
-
-            <!-- Основная область -->
-
             <div id="timeline-body"></div>
-
         </div>
-
     </section>
 
-    <!-- ==========================================================
-         STATUS BAR
-    =========================================================== -->
-
     <footer id="status-bar">
-
-        <span id="status-text">
-
-            Готово
-
-        </span>
-
+        <span id="status-text">Готово</span>
     </footer>
 
 </div>
 
-<!-- ==========================================================
-     MODAL
-=========================================================== -->
-
 <div id="modal-overlay" hidden>
-
     <div id="project-modal">
-
-        <button id="modal-close">
-
-            ✕
-
-        </button>
-
+        <button id="modal-close">✕</button>
         <h2 id="modal-title"></h2>
-
         <div id="modal-content"></div>
-
     </div>
-
 </div>
 
-<!-- ==========================================================
-     JAVASCRIPT
-=========================================================== -->
+<!-- Все JavaScript-файлы находятся в assets/js/ -->
+<script src="assets/js/loader.js"></script>
+<script src="assets/js/renderer.js"></script>
+<script src="assets/js/layout.js"></script>
+<script src="assets/js/svg.js"></script>
+<script src="assets/js/timeline.js"></script>
+<script src="assets/js/filters.js"></script>
+<script src="assets/js/modal.js"></script>
+<script src="assets/js/app.js"></script>
 
-<script src="js/loader.js"></script>
-<script src="js/renderer.js"></script>
-<script src="js/layout.js"></script>
-<script src="js/svg.js"></script>
-<script src="js/timeline.js"></script>
-<script src="js/filters.js"></script>
-<script src="js/modal.js"></script>
-<script src="js/app.js"></script>
 </body>
-
 </html>
