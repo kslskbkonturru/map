@@ -1,0 +1,130 @@
+{
+  "meta": {
+    "schema": "stm/program/v1",
+    "version": "1.0",
+    "updated": "2026-07-30",
+    "author": "Service Transformation Map"
+  },
+
+  "data": {
+
+    "id": "program-service",
+
+    "code": "SERVICE",
+
+    "name": "Сервис",
+
+    "shortName": "Сервис",
+
+    "description": "Программа развития сервисной модели компании",
+
+    "status": {
+      "code": "active",
+      "title": "В реализации"
+    },
+
+    "goal": {
+
+      "title": "Построение системы балансирования уровня сервиса с экономической целесообразностью",
+
+      "description": "Создание системы постоянных изменений, обеспечивающей баланс между уровнем клиентского сервиса и экономической эффективностью компании.",
+
+      "currentState": {
+        "title": "AS IS",
+        "description": "Текущая модель управления сервисом"
+      },
+
+      "targetState": {
+        "title": "TO BE",
+        "description": "Система постоянного развития сервиса"
+      },
+
+      "progress": 42
+    },
+
+    "timeline": {
+
+      "start": "2026-Q1",
+
+      "finish": "2027-Q4",
+
+      "current": "2026-Q3"
+
+    },
+
+    "statistics": {
+
+      "focuses": 4,
+
+      "projects": 27,
+
+      "activities": 132,
+
+      "links": 16,
+
+      "attention": 5
+
+    },
+
+    "navigation": {
+
+      "defaultView": "focuses",
+
+      "defaultZoom": 100,
+
+      "showTimeline": true,
+
+      "showLinks": true,
+
+      "showProgress": true,
+
+      "showAttentionPanel": true
+
+    },
+
+    "dashboard": {
+
+      "enabled": false,
+
+      "url": null
+
+    },
+
+    "owner": {
+
+      "name": "",
+
+      "position": "",
+
+      "email": ""
+
+    },
+
+    "branding": {
+
+      "primaryColor": "#1E4E8C",
+
+      "accentColor": "#4F8EF7",
+
+      "logo": "assets/logo/logo.svg"
+
+    },
+
+    "permissions": {
+
+      "mode": "local",
+
+      "editable": true
+
+    },
+
+    "lastUpdate": {
+
+      "date": "2026-07-30",
+
+      "author": "System"
+
+    }
+
+  }
+}

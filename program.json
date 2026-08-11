@@ -1,0 +1,130 @@
+{
+  "meta": {
+    "schema": "stm/links/v1",
+    "version": "1.0",
+    "updated": "2026-07-30",
+    "author": "Service Transformation Map"
+  },
+
+  "data": [
+
+    {
+      "id": "link-001",
+
+      "source": "project-service-catalog",
+      "target": "project-routing",
+
+      "type": "dependency",
+
+      "strength": "critical",
+
+      "direction": "forward",
+
+      "title": "Маршрутизация использует каталог запросов",
+
+      "description": "Маршрутизация клиентских запросов невозможна без единого каталога.",
+
+      "status": "active"
+    },
+
+    {
+      "id": "link-002",
+
+      "source": "project-routing",
+      "target": "project-voc-platform",
+
+      "type": "information",
+
+      "strength": "medium",
+
+      "direction": "forward",
+
+      "title": "Передача информации о запросах",
+
+      "description": "Данные о клиентских запросах используются системой Voice of Customer.",
+
+      "status": "active"
+    },
+
+    {
+      "id": "link-003",
+
+      "source": "project-voc-platform",
+      "target": "project-cxi-dashboard",
+
+      "type": "data",
+
+      "strength": "high",
+
+      "direction": "forward",
+
+      "title": "Передача аналитики",
+
+      "description": "Платформа VoC является одним из источников данных для панели CXI.",
+
+      "status": "active"
+    },
+
+    {
+      "id": "link-004",
+
+      "source": "project-service-level-model",
+      "target": "project-routing",
+
+      "type": "methodology",
+
+      "strength": "high",
+
+      "direction": "forward",
+
+      "title": "Определение правил обработки",
+
+      "description": "Маршрутизация запросов должна учитывать модель уровней сервиса.",
+
+      "status": "active"
+    },
+
+    {
+      "id": "link-005",
+
+      "source": "external-crm",
+      "target": "project-routing",
+
+      "type": "external",
+
+      "strength": "critical",
+
+      "direction": "forward",
+
+      "title": "CRM",
+
+      "description": "Маршрутизация зависит от развития корпоративной CRM.",
+
+      "status": "active",
+
+      "external": true
+    },
+
+    {
+      "id": "link-006",
+
+      "source": "external-power-bi",
+      "target": "project-cxi-dashboard",
+
+      "type": "external",
+
+      "strength": "medium",
+
+      "direction": "forward",
+
+      "title": "Power BI",
+
+      "description": "Панель CXI использует инфраструктуру корпоративной BI-платформы.",
+
+      "status": "planned",
+
+      "external": true
+    }
+
+  ]
+}
