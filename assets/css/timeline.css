@@ -1,0 +1,457 @@
+/*
+ * Service Transformation Map (STM)
+ * Timeline styles
+ *
+ * Build 004.02 — visual cleanup
+ *
+ * Назначение:
+ * - читаемая временная шкала;
+ * - отдельная строка для каждого проекта;
+ * - фиксированная колонка названия проекта;
+ * - горизонтальная прокрутка только внутри Timeline;
+ * - аккуратная легенда и переключатель масштаба.
+ */
+
+/* ======================================================================
+   TIMELINE CONTAINER
+====================================================================== */
+
+#timeline-panel {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 12px 18px 10px;
+    border-top: 1px solid #d9e1ea;
+    background: #ffffff;
+}
+
+#timeline-panel > h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    line-height: 1.2;
+    color: #075db5;
+}
+
+#timeline {
+    width: 100%;
+    min-width: 0;
+}
+
+/* ======================================================================
+   CONTROLS
+====================================================================== */
+
+#timeline-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    min-height: 32px;
+    margin-bottom: 8px;
+    color: #4f6072;
+    font-size: 12px;
+}
+
+#timeline-scale {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+}
+
+#timeline-scale button {
+    box-sizing: border-box;
+    min-width: 72px;
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid #d6e0ea;
+    border-radius: 6px;
+    background: #f4f7fa;
+    color: #30465c;
+    cursor: pointer;
+    font: inherit;
+}
+
+#timeline-scale button:hover {
+    background: #e9f1f8;
+}
+
+#timeline-scale button.active {
+    border-color: #1e4e8c;
+    background: #1e4e8c;
+    color: #ffffff;
+}
+
+/* Legend */
+
+.timeline-legend-title {
+    font-weight: 600;
+    margin-right: 2px;
+}
+
+.timeline-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.timeline-color {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.timeline-color.planned {
+    background: #8da2b8;
+}
+
+.timeline-color.active {
+    background: #1e73be;
+}
+
+.timeline-color.paused {
+    background: #d99000;
+}
+
+.timeline-color.completed {
+    background: #3d8b5a;
+}
+
+/* ======================================================================
+   HEADER
+====================================================================== */
+
+#timeline-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    min-height: 30px;
+    margin-bottom: 6px;
+    color: #1d344c;
+}
+
+.timeline-title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.timeline-subtitle {
+    color: #718094;
+    font-size: 12px;
+}
+
+/* ======================================================================
+   SCROLLING AREA
+====================================================================== */
+
+#timeline-body {
+    position: relative;
+    width: 100%;
+    height: 255px;
+    overflow: auto;
+    border: 1px solid #d7e0e9;
+    border-radius: 6px;
+    background: #fbfcfe;
+    scrollbar-color: #aebdcb #eef2f6;
+}
+
+/*
+ * Every timeline row has exactly two columns:
+ * project name + time track.
+ */
+.timeline-axis,
+.timeline-row {
+    display: grid;
+    grid-template-columns: 230px max-content;
+    width: max-content;
+    min-width: 100%;
+    box-sizing: border-box;
+}
+
+/* ======================================================================
+   TIME AXIS
+====================================================================== */
+
+.timeline-axis {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: 42px;
+    background: #f4f7fa;
+    border-bottom: 1px solid #ccd7e2;
+}
+
+.timeline-axis-label {
+    position: sticky;
+    left: 0;
+    z-index: 12;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    width: 230px !important;
+    min-width: 230px;
+    padding: 0 12px;
+    border-right: 1px solid #ccd7e2;
+    background: #f4f7fa;
+    color: #607286;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.timeline-axis-label::after {
+    content: "Проекты";
+}
+
+.timeline-axis-track {
+    position: relative;
+    height: 42px;
+}
+
+.timeline-quarter,
+.timeline-year,
+.timeline-month {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    padding: 0 6px;
+    border-left: 1px solid #dbe3eb;
+    color: #42576b;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.timeline-year {
+    font-size: 13px;
+    background: #eef3f7;
+}
+
+.timeline-month {
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* ======================================================================
+   PROJECT ROWS
+====================================================================== */
+
+.timeline-projects {
+    width: max-content;
+    min-width: 100%;
+}
+
+.timeline-row {
+    min-height: 52px;
+    height: 52px;
+    border-bottom: 1px solid #e3e9ef;
+    background: #ffffff;
+}
+
+.timeline-row:nth-child(even) {
+    background: #fbfcfd;
+}
+
+.timeline-row:hover {
+    background: #f1f6fb;
+}
+
+.timeline-row.selected {
+    background: #eaf3ff;
+}
+
+/* Project name column */
+
+.timeline-label {
+    position: sticky;
+    left: 0;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    width: 230px !important;
+    min-width: 230px;
+    height: 52px;
+    padding: 0 12px;
+    border-right: 1px solid #dbe3eb;
+    background: inherit;
+    color: #24384d;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.timeline-row-area {
+    position: relative;
+    height: 52px;
+    min-height: 52px;
+}
+
+/* ======================================================================
+   GRID
+====================================================================== */
+
+.timeline-grid-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: #e8edf2;
+    pointer-events: none;
+}
+
+/* ======================================================================
+   PROJECT BAR
+====================================================================== */
+
+.timeline-bar {
+    position: absolute;
+    top: 11px;
+    box-sizing: border-box;
+    min-width: 34px;
+    height: 30px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    border-radius: 5px;
+    border: 1px solid transparent;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: filter 120ms ease, transform 120ms ease;
+    z-index: 4;
+}
+
+.timeline-bar:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+.timeline-bar.planned {
+    background: #7d91a6;
+    border-color: #687d93;
+}
+
+.timeline-bar.active {
+    background: #1e73be;
+    border-color: #155d9d;
+}
+
+.timeline-bar.paused {
+    background: #d99000;
+    border-color: #b87500;
+}
+
+.timeline-bar.completed {
+    background: #3d8b5a;
+    border-color: #2f7047;
+}
+
+.timeline-bar.no-date {
+    background: #9aa8b6;
+    border-color: #8997a5;
+}
+
+/* ======================================================================
+   CURRENT PERIOD
+====================================================================== */
+
+.timeline-today {
+    position: absolute;
+    z-index: 8;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e85d5d;
+    pointer-events: none;
+}
+
+.timeline-today::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e85d5d;
+    transform: translate(-50%, -2px);
+}
+
+.timeline-today::after {
+    content: "Сейчас";
+    position: absolute;
+    top: 7px;
+    left: 6px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: #e85d5d;
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ======================================================================
+   EMPTY STATE
+====================================================================== */
+
+.timeline-empty {
+    padding: 24px;
+    color: #758497;
+    font-size: 13px;
+}
+
+/* ======================================================================
+   SCROLLBAR
+====================================================================== */
+
+#timeline-body::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+#timeline-body::-webkit-scrollbar-track {
+    background: #eef2f6;
+}
+
+#timeline-body::-webkit-scrollbar-thumb {
+    background: #aebdcb;
+    border-radius: 6px;
+    border: 2px solid #eef2f6;
+}
+
+#timeline-body::-webkit-scrollbar-thumb:hover {
+    background: #91a4b7;
+}
+
+/* ======================================================================
+   SMALL SCREENS
+====================================================================== */
+
+@media (max-width: 900px) {
+
+    #timeline-panel {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    #timeline-scale {
+        margin-left: 0;
+    }
+
+    #timeline-body {
+        height: 240px;
+    }
+}
