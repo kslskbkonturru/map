@@ -3,7 +3,7 @@
  *
  * renderer.js
  *
- * Build 004.04
+ * Build 004
  * Part 1 / 8
  *
  * Core
@@ -175,6 +175,8 @@ STM.Renderer = {
             ...this.projects
 
         ];
+
+        this.updateProjectButtons();
 
     },
 
@@ -638,13 +640,13 @@ STM.Renderer = {
 
         if (STM.Layout) {
 
-            STM.Layout.build({
+            STM.Layout.build(
 
-                focuses: this.focuses,
+                this.focuses,
                 projects,
-                workspace: this.workspace
+                this.workspace
 
-            });
+            );
 
         }
 
@@ -948,6 +950,8 @@ STM.Renderer = {
 
         }
 
+        this.updateProjectButtons();
+
         if (
 
             STM.Modal &&
@@ -979,6 +983,8 @@ STM.Renderer = {
         this.currentFocus = null;
 
         this.currentProject = null;
+
+        this.updateProjectButtons();
 
         this.filteredProjects = [
 
@@ -1173,9 +1179,9 @@ STM.Renderer = {
 
             links = links.filter(link =>
 
-                (link.source || link.from) === projectId ||
+                link.from === projectId ||
 
-                (link.target || link.to) === projectId
+                link.to === projectId
 
             );
 
@@ -1189,13 +1195,13 @@ STM.Renderer = {
 
                 : this.projects;
 
-        STM.SVG.render({
+        STM.SVG.render(
 
             links,
 
             projects
 
-        });
+        );
 
     },
 
@@ -1217,15 +1223,11 @@ STM.Renderer = {
 
         }
 
-        STM.Timeline.render({
+        STM.Timeline.render(
 
-            projects: this.currentFocus
-                ? this.filteredProjects
-                : this.projects,
+            this.history
 
-            history: this.history
-
-        });
+        );
 
     },
 
@@ -1281,9 +1283,9 @@ STM.Renderer = {
 
         return this.links.filter(link =>
 
-            (link.source || link.from) === projectId ||
+            link.from === projectId ||
 
-            (link.target || link.to) === projectId
+            link.to === projectId
 
         );
 
@@ -1568,6 +1570,42 @@ STM.Renderer = {
 
         );
 
+        const addButton = document.getElementById(
+
+            "add-project-button"
+
+        );
+
+        const removeButton = document.getElementById(
+
+            "remove-project-button"
+
+        );
+
+        addButton?.addEventListener(
+
+            "click",
+
+            () => {
+
+                this.addProjectFromUI();
+
+            }
+
+        );
+
+        removeButton?.addEventListener(
+
+            "click",
+
+            () => {
+
+                this.removeSelectedProject();
+
+            }
+
+        );
+
     },
 
     /* ======================================================================
@@ -1673,6 +1711,189 @@ STM.Renderer = {
     },
 
     /* ======================================================================
+       PROJECT BUTTONS
+    ====================================================================== */
+
+    updateProjectButtons() {
+
+        const removeButton = document.getElementById(
+
+            "remove-project-button"
+
+        );
+
+        if (!removeButton) return;
+
+        removeButton.disabled = !this.currentProject;
+
+    },
+
+    /* ======================================================================
+       ADD PROJECT FROM UI
+    ====================================================================== */
+
+    addProjectFromUI() {
+
+        if (!this.focuses.length) {
+
+            this.updateStatus("Нет доступных фокусов для проекта.");
+
+            return;
+
+        }
+
+        const name = window.prompt(
+
+            "Название нового проекта:"
+
+        );
+
+        if (!name || !name.trim()) return;
+
+        const focusList = this.focuses
+            .map((focus, index) => `${index + 1}. ${focus.name}`)
+            .join("\n");
+
+        const focusAnswer = window.prompt(
+
+            `Выберите фокус (введите номер):\n\n${focusList}`,
+
+            "1"
+
+        );
+
+        const focusIndex = Number(focusAnswer) - 1;
+
+        const focus = this.focuses[focusIndex];
+
+        if (!focus) {
+
+            this.updateStatus("Проект не добавлен: фокус не выбран.");
+
+            return;
+
+        }
+
+        const description = window.prompt(
+
+            "Краткое описание проекта:",
+
+            ""
+
+        ) || "";
+
+        const baseId = name
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-zа-я0-9]+/gi, "-")
+            .replace(/^-+|-+$/g, "") || "project";
+
+        let id = `project-${baseId}`;
+        let counter = 2;
+
+        while (this.projects.some(project => project.id === id)) {
+
+            id = `project-${baseId}-${counter}`;
+            counter += 1;
+
+        }
+
+        const project = {
+
+            id,
+
+            focusId: focus.id,
+
+            code: `NEW-${String(this.projects.length + 1).padStart(3, "0")}`,
+
+            name: name.trim(),
+
+            shortName: name.trim(),
+
+            description: description.trim(),
+
+            goal: "",
+
+            status: {
+                code: "planned",
+                title: "Планируется"
+            },
+
+            priority: "medium",
+            impact: "medium",
+            progress: 0,
+
+            timeline: {
+                start: "2026-Q1",
+                finish: "2026-Q4"
+            },
+
+            owner: {
+                name: "",
+                position: ""
+            },
+
+            tags: [],
+            externalDependencies: [],
+            detailsPage: ""
+
+        };
+
+        this.addProject(project);
+
+        this.currentFocus = focus.id;
+        this.filteredProjects = this.projects.filter(
+            item => item.focusId === focus.id
+        );
+
+        this.renderProjects();
+        this.refreshConnections();
+        this.refreshTimeline();
+        this.updateProjectButtons();
+
+        this.updateStatus(`Добавлен проект: ${project.name}`);
+
+    },
+
+    /* ======================================================================
+       REMOVE SELECTED PROJECT
+    ====================================================================== */
+
+    removeSelectedProject() {
+
+        if (!this.currentProject) {
+
+            this.updateStatus("Сначала выберите проект.");
+            return;
+
+        }
+
+        const project = this.currentProject;
+
+        const confirmed = window.confirm(
+
+            `Удалить проект «${project.name}»?`
+
+        );
+
+        if (!confirmed) return;
+
+        this.removeProject(project.id);
+
+        this.currentProject = null;
+        this.updateProjectButtons();
+
+        if (STM.Modal && typeof STM.Modal.close === "function") {
+
+            STM.Modal.close();
+
+        }
+
+        this.updateStatus(`Проект удалён: ${project.name}`);
+
+    },
+
+    /* ======================================================================
        ADD PROJECT
     ====================================================================== */
 
@@ -1682,11 +1903,9 @@ STM.Renderer = {
 
         this.projects.push(project);
 
-        this.filteredProjects = [
-
-            ...this.projects
-
-        ];
+        this.filteredProjects = this.currentFocus
+            ? this.projects.filter(item => item.focusId === this.currentFocus)
+            : [...this.projects];
 
         this.renderProjects();
 
@@ -1722,8 +1941,6 @@ STM.Renderer = {
 
         this.refreshConnections();
 
-        this.refreshTimeline();
-
     },
 
     /* ======================================================================
@@ -1740,11 +1957,20 @@ STM.Renderer = {
 
         );
 
-        this.filteredProjects = [
+        this.links = this.links.filter(
 
-            ...this.projects
+            link =>
 
-        ];
+                link.source !== projectId &&
+                link.target !== projectId &&
+                link.from !== projectId &&
+                link.to !== projectId
+
+        );
+
+        this.filteredProjects = this.currentFocus
+            ? this.projects.filter(item => item.focusId === this.currentFocus)
+            : [...this.projects];
 
         this.renderProjects();
 
@@ -1824,14 +2050,12 @@ setFilteredProjects(projects = []) {
 
     if (STM.SVG) {
 
-        STM.SVG.render({
-            links: this.links,
-            projects: this.filteredProjects
-        });
+        STM.SVG.render(
+            this.links,
+            this.filteredProjects
+        );
 
     }
-
-    this.refreshTimeline();
 
 },
     /* ======================================================================
