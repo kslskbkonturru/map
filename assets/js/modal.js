@@ -67,7 +67,7 @@ STM.Modal = {
                 document.getElementById("modal-overlay"),
 
             window:
-                document.getElementById("project-modal"),
+                document.getElementById("modal"),
 
             header:
                 document.getElementById("modal-header"),
@@ -82,7 +82,7 @@ STM.Modal = {
                 document.getElementById("modal-tabs"),
 
             body:
-                document.getElementById("modal-content"),
+                document.getElementById("modal-body"),
 
             footer:
                 document.getElementById("modal-footer"),
@@ -662,9 +662,9 @@ STM.Modal = {
 
             .filter(link =>
 
-                (link.source || link.from) === project.id ||
+                link.from === project.id ||
 
-                (link.target || link.to) === project.id
+                link.to === project.id
 
             );
 
@@ -680,17 +680,13 @@ STM.Modal = {
 
         links.forEach(link => {
 
-            const sourceId = link.source || link.from;
-
-            const targetId = link.target || link.to;
-
             const projectId =
 
-                sourceId === project.id
+                link.from === project.id
 
-                    ? targetId
+                    ? link.to
 
-                    : sourceId;
+                    : link.from;
 
             const target = STM.Loader
 
